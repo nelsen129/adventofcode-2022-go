@@ -59,14 +59,26 @@ func part1(file_name string) int {
 func part2(file_name string) int {
 	total_score := 0
 
-	// file, err := os.Open(file_name)
-	// check(err)
+	file, err := os.Open(file_name)
+	check(err)
 
-	// scanner := bufio.NewScanner(file)
+	scanner := bufio.NewScanner(file)
 
-	// for scanner.Scan() {
-	// 	line := scanner.Text()
-	// }
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		sections := get_sections_from_assignment_pair(line)
+
+		if sections[0] <= sections[2] && sections[1] >= sections[2] {
+			total_score += 1
+		} else if sections[0] <= sections[3] && sections[1] >= sections[3] {
+			total_score += 1
+		} else if sections[2] <= sections[0] && sections[3] >= sections[0] {
+			total_score += 1
+		} else if sections[2] <= sections[1] && sections[3] >= sections[1] {
+			total_score += 1
+		}
+	}
 
 	return total_score
 }
