@@ -74,19 +74,51 @@ func part1(file_name string) string {
 	return string(top_runes)
 }
 
-func part2(file_name string) int {
-	total_score := 0
+func part2(file_name string) string {
+	file, err := os.Open(file_name)
+	check(err)
 
-	// file, err := os.Open(file_name)
-	// check(err)
+	scanner := bufio.NewScanner(file)
 
-	// scanner := bufio.NewScanner(file)
+	crate_linked_lists := linkedlist.LinkedLists{}
+	crate_index := 0
 
-	// for scanner.Scan() {
-	// 	line := scanner.Text()
-	// }
+	for scanner.Scan() {
+		line := scanner.Text()
 
-	return total_score
+		if line == "" {
+			continue
+		} else if crate_index >= 0 {
+			if []rune(line)[1] == '1' {
+				crate_linked_lists.CleanRune()
+				crate_index = -1
+				continue
+			}
+			crate_row := process_crate_line(line)
+			crate_row_interface := make([]interface{}, len(crate_row))
+			for i := range crate_row {
+				crate_row_interface[i] = crate_row[i]
+			}
+			crate_linked_lists.Append(crate_row_interface)
+			crate_index += 1
+		} else {
+			command := strings.Split(line, " ")
+			count, err := strconv.Atoi(command[1])
+			check(err)
+			from, err := strconv.Atoi(command[3])
+			check(err)
+			to, err := strconv.Atoi(command[5])
+			check(err)
+
+			from -= 1 // for 0-indexing
+			to -= 1   // for 0-indexing
+
+			crate_linked_lists.MoveGroup(count, from, to)
+		}
+	}
+
+	top_runes := crate_linked_lists.GetTopRunes()
+	return string(top_runes)
 }
 
 func main() {

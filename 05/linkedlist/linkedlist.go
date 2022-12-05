@@ -50,6 +50,16 @@ func (L *LinkedList) Pop() interface{} {
 	return value
 }
 
+func (L *LinkedList) PopGroup(count int) []interface{} {
+	values := make([]interface{}, count)
+
+	for i := range values {
+		values[i] = L.Pop()
+	}
+
+	return values
+}
+
 func (L *LinkedList) Clean() {
 	head := L.head
 	for head != nil {
@@ -143,6 +153,18 @@ func (Ls *LinkedLists) Move(count, from, to int) {
 	for i := 0; i < count; i++ {
 		value := Ls.heads[from].Pop()
 		Ls.heads[to].Insert(value)
+	}
+}
+
+func (Ls *LinkedLists) MoveGroup(count, from, to int) {
+	if Ls.heads == nil {
+		return
+	}
+
+	values := Ls.heads[from].PopGroup(count)
+
+	for i := len(values) - 1; i >= 0; i-- {
+		Ls.heads[to].Insert(values[i])
 	}
 }
 
