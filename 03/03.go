@@ -71,17 +71,54 @@ func part1(file_name string) int {
 	return total_priority
 }
 
+func get_common_from_rucksacks(rucksack_1, rucksack_2, rucksack_3 string) rune {
+	rucksack_1_sorted := sort_runes([]rune(rucksack_1))
+	rucksack_2_sorted := sort_runes([]rune(rucksack_2))
+	rucksack_3_sorted := sort_runes([]rune(rucksack_3))
+
+	ptr1 := 0
+	ptr2 := 0
+	ptr3 := 0
+
+	for ptr1 < len(rucksack_1_sorted) && ptr2 < len(rucksack_2_sorted) && ptr3 < len(rucksack_3_sorted) {
+		if rucksack_1_sorted[ptr1] == rucksack_2_sorted[ptr2] && rucksack_1_sorted[ptr1] == rucksack_3_sorted[ptr3] {
+			return rucksack_1_sorted[ptr1]
+		} else if rucksack_1_sorted[ptr1] < rucksack_2_sorted[ptr2] && rucksack_1_sorted[ptr1] < rucksack_3_sorted[ptr3] {
+			ptr1 += 1
+		} else if rucksack_2_sorted[ptr2] < rucksack_3_sorted[ptr3] {
+			ptr2 += 1
+		} else {
+			ptr3 += 1
+		}
+	}
+
+	return 'A' - 1
+}
+
 func part2(file_name string) int {
 	total_priority := 0
 
-	// file, err := os.Open(file_name)
-	// check(err)
+	file, err := os.Open(file_name)
+	check(err)
 
-	// scanner := bufio.NewScanner(file)
+	scanner := bufio.NewScanner(file)
 
-	// for scanner.Scan() {
-	// 	line := scanner.Text()
-	// }
+	for scanner.Scan() {
+		rucksack_1 := scanner.Text()
+		if !scanner.Scan() {
+			break
+		}
+		rucksack_2 := scanner.Text()
+		if !scanner.Scan() {
+			break
+		}
+		rucksack_3 := scanner.Text()
+
+		common_item := get_common_from_rucksacks(rucksack_1, rucksack_2, rucksack_3)
+		common_priority := get_priority(common_item)
+
+		total_priority += common_priority
+	}
 
 	return total_priority
 }
