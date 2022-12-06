@@ -4,8 +4,9 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"strconv"
 	"sort"
+	"strconv"
+	"time"
 )
 
 func check(e error) {
@@ -14,9 +15,14 @@ func check(e error) {
 	}
 }
 
-func part1(scanner *bufio.Scanner) int {
+func part1(file_name string) int {
 	most_calories := 0
 	curr_calories := 0
+
+	file, err := os.Open(file_name)
+	check(err)
+
+	scanner := bufio.NewScanner(file)
 
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -40,16 +46,21 @@ func part1(scanner *bufio.Scanner) int {
 func sum(array []int) int {
 	result := 0
 
-	for _, v:= range array {
+	for _, v := range array {
 		result += v
 	}
 
 	return result
 }
 
-func part2(scanner *bufio.Scanner) int {
+func part2(file_name string) int {
 	top_calories := []int{0, 0, 0}
 	curr_calories := 0
+
+	file, err := os.Open(file_name)
+	check(err)
+
+	scanner := bufio.NewScanner(file)
 
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -72,24 +83,16 @@ func part2(scanner *bufio.Scanner) int {
 }
 
 func main() {
+	start := time.Now()
+
 	args := os.Args[1:]
 	file_path := args[0]
 
-	file, err := os.Open(file_path)
-	check(err)
+	fmt.Println("Part 1:", part1(file_path))
 
-	scanner := bufio.NewScanner(file)
+	fmt.Println("Part 2:", part2(file_path))
 
-	result := part1(scanner)
+	duration := time.Since(start)
 
-	fmt.Println(result)
-
-	file, err = os.Open(file_path)
-	check(err)
-
-	scanner = bufio.NewScanner(file)
-
-	result = part2(scanner)
-
-	fmt.Println(result)
+	fmt.Println("Program execution time:", duration)
 }

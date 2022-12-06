@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"sort"
+	"time"
 )
 
 func check(e error) {
@@ -124,10 +125,16 @@ func part2(file_name string) int {
 }
 
 func main() {
+	start := time.Now()
+
 	args := os.Args[1:]
 	file_path := args[0]
 
-	fmt.Println(part1(file_path))
+	fmt.Println("Part 1:", part1(file_path))
 
-	fmt.Println(part2(file_path))
+	fmt.Println("Part 2:", part2(file_path))
+
+	duration := time.Since(start)
+
+	fmt.Println("Program execution time:", duration)
 }
