@@ -12,7 +12,7 @@ func check(e error) {
 	}
 }
 
-func check_stream(stream_buffer [4]byte) bool {
+func check_stream(stream_buffer []byte) bool {
 	ptr := 0
 
 	for i := range stream_buffer {
@@ -42,7 +42,7 @@ func part1(file_name string) int {
 		stream_buffer[marker_number%4] = stream_byte
 
 		if marker_number >= 4 {
-			if check_stream(stream_buffer) {
+			if check_stream(stream_buffer[:]) {
 				break
 			}
 		}
@@ -54,18 +54,29 @@ func part1(file_name string) int {
 }
 
 func part2(file_name string) int {
-	total_score := 0
+	marker_number := 1
+	var stream_buffer [14]byte
 
-	// file, err := os.Open(file_name)
-	// check(err)
+	file, err := os.Open(file_name)
+	check(err)
 
-	// scanner := bufio.NewScanner(file)
+	scanner := bufio.NewScanner(file)
+	scanner.Split(bufio.ScanBytes)
 
-	// for scanner.Scan() {
-	// 	line := scanner.Text()
-	// }
+	for scanner.Scan() {
+		stream_byte := scanner.Bytes()[0]
+		stream_buffer[marker_number%14] = stream_byte
 
-	return total_score
+		if marker_number >= 14 {
+			if check_stream(stream_buffer[:]) {
+				break
+			}
+		}
+
+		marker_number++
+	}
+
+	return marker_number
 }
 
 func main() {
