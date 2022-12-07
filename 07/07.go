@@ -61,18 +61,49 @@ func part1(file_name string) int {
 }
 
 func part2(file_name string) int {
-	total_score := 0
+	root_directory := directory.Directory{}
+	root_directory.AddSubdirectory("/")
+	current_directory := &root_directory
 
-	// file, err := os.Open(file_name)
-	// check(err)
+	file, err := os.Open(file_name)
+	check(err)
 
-	// scanner := bufio.NewScanner(file)
+	scanner := bufio.NewScanner(file)
+	scanner.Split(bufio.ScanWords)
 
-	// for scanner.Scan() {
-	// 	line := scanner.Text()
-	// }
+	for scanner.Scan() {
+		word := scanner.Text()
 
-	return total_score
+		if word == "$" {
+			scanner.Scan()
+			cmd := scanner.Text()
+
+			if cmd == "cd" {
+				scanner.Scan()
+				dir_name := scanner.Text()
+
+				if dir_name == ".." {
+					current_directory = current_directory.GetParentDirectory()
+				} else {
+					current_directory = current_directory.GetSubdirectoryFromName(dir_name)
+				}
+			} else {
+				continue
+			}
+		} else if word == "dir" {
+			scanner.Scan()
+			current_directory.AddSubdirectory(scanner.Text())
+		} else {
+			file_size, err := strconv.Atoi(word)
+			check(err)
+			current_directory.AddSize(file_size)
+			scanner.Scan()
+		}
+	}
+
+	amount_to_remove := 30000000 - (70000000 - root_directory.GetTotalSize())
+
+	return root_directory.GetSmallestToRemove(amount_to_remove)
 }
 
 func main() {

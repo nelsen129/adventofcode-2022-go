@@ -64,3 +64,20 @@ func (D *Directory) GetTotalSizeSubdirectoriesLessThanEqualTo(size int) int {
 
 	return total_size
 }
+
+func (D *Directory) GetSmallestToRemove(size int) int {
+	if D.GetTotalSize() < size {
+		return -1
+	}
+
+	dir_size := D.total_size
+
+	for i := range D.child_directories {
+		child_size := D.child_directories[i].GetSmallestToRemove(size)
+		if child_size != -1 && child_size < dir_size {
+			dir_size = child_size
+		}
+	}
+
+	return dir_size
+}
