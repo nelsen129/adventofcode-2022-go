@@ -80,18 +80,34 @@ func part1(file_name string) int {
 }
 
 func part2(file_name string) int {
-	total_score := 0
+	var R [10][2]int
 
-	// file, err := os.Open(file_name)
-	// check(err)
+	visited := make(map[[2]int]byte)
 
-	// scanner := bufio.NewScanner(file)
+	visited[R[9]] = 1
 
-	// for scanner.Scan() {
-	// 	line := scanner.Text()
-	// }
+	file, err := os.Open(file_name)
+	check(err)
 
-	return total_score
+	scanner := bufio.NewScanner(file)
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		line_split := strings.Split(line, " ")
+		dir := line_split[0]
+		dist, err := strconv.Atoi(line_split[1])
+		check(err)
+
+		for i := 0; i < dist; i++ {
+			R[0] = move_head(R[0][0], R[0][1], dir)
+			for i := 1; i < 10; i++ {
+				R[i] = move_tail(R[i-1][0], R[i-1][1], R[i][0], R[i][1])
+			}
+			visited[R[9]] = 1
+		}
+	}
+
+	return len(visited)
 }
 
 func main() {
