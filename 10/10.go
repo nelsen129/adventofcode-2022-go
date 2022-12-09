@@ -95,6 +95,7 @@ func main() {
 
 	fmt.Println("Part 1:", part1(file_path))
 
+	fmt.Println("Part 2:")
 	part2(file_path)
 
 	duration := time.Since(start)
