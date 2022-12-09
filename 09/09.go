@@ -53,9 +53,9 @@ func part1(file_name string) int {
 	H := [2]int{0, 0}
 	T := [2]int{0, 0}
 
-	visited := make(map[[2]int]byte)
+	visited := make(map[[2]int]struct{})
 
-	visited[T] = 1
+	visited[T] = struct{}{}
 
 	file, err := os.Open(file_name)
 	check(err)
@@ -72,7 +72,7 @@ func part1(file_name string) int {
 		for i := 0; i < dist; i++ {
 			H = move_head(H[0], H[1], dir)
 			T = move_tail(H[0], H[1], T[0], T[1])
-			visited[T] = 1
+			visited[T] = struct{}{}
 		}
 	}
 
@@ -82,9 +82,9 @@ func part1(file_name string) int {
 func part2(file_name string) int {
 	var R [10][2]int
 
-	visited := make(map[[2]int]byte)
+	visited := make(map[[2]int]struct{})
 
-	visited[R[9]] = 1
+	visited[R[9]] = struct{}{}
 
 	file, err := os.Open(file_name)
 	check(err)
@@ -101,9 +101,13 @@ func part2(file_name string) int {
 		for i := 0; i < dist; i++ {
 			R[0] = move_head(R[0][0], R[0][1], dir)
 			for i := 1; i < 10; i++ {
+				Tn := move_tail(R[i-1][0], R[i-1][1], R[i][0], R[i][1])
+				if Tn == R[i] {
+					break
+				}
 				R[i] = move_tail(R[i-1][0], R[i-1][1], R[i][0], R[i][1])
 			}
-			visited[R[9]] = 1
+			visited[R[9]] = struct{}{}
 		}
 	}
 
