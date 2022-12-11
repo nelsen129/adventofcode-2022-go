@@ -12,12 +12,14 @@ func check(e error) {
 }
 
 type Monkey struct {
-	items        []int
-	operation    string
-	test_div     int
-	true_monkey  int
-	false_monkey int
-	throw_count  int
+	items          []int
+	operation      string
+	test_div       int
+	true_monkey    int
+	false_monkey   int
+	throw_count    int
+	worry_division int
+	total_mod      int
 }
 
 func (M *Monkey) GetTrueMonkey() int {
@@ -55,11 +57,20 @@ func (M *Monkey) SetFalseMonkey(false_monkey int) {
 	M.false_monkey = false_monkey
 }
 
+func (M *Monkey) SetWorryDivision(worry_division int) {
+	M.worry_division = worry_division
+}
+
+func (M *Monkey) SetTotalMod(total_mod int) {
+	M.total_mod = total_mod
+}
+
 func (M *Monkey) GetItemThrows() [][]int {
 	item_throws := make([][]int, len(M.items))
 	for i := range M.items {
 		worry := RunOperation(M.items[i], M.operation)
-		worry /= 3
+		worry /= M.worry_division
+		worry %= M.total_mod
 		throw_target := M.TestCondition(worry)
 
 		item_throws[i] = []int{worry, throw_target}

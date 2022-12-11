@@ -17,8 +17,9 @@ func check(e error) {
 	}
 }
 
-func getMonkeys(file_name string) []monkey.Monkey {
+func getMonkeys(file_name string, worry_division int) []monkey.Monkey {
 	var monkeys []monkey.Monkey
+	total_mod := 1
 
 	file, err := os.Open(file_name)
 	check(err)
@@ -54,6 +55,7 @@ func getMonkeys(file_name string) []monkey.Monkey {
 		test_div, err := strconv.Atoi(test_div_string)
 		check(err)
 		monkey.SetTestDiv(test_div)
+		total_mod *= test_div
 
 		scanner.Scan()
 		true_monkey_line := scanner.Text()
@@ -67,7 +69,13 @@ func getMonkeys(file_name string) []monkey.Monkey {
 		false_monkey, err := strconv.Atoi(false_monkey_string)
 		monkey.SetFalseMonkey(false_monkey)
 
+		monkey.SetWorryDivision(worry_division)
+
 		monkeys = append(monkeys, monkey)
+	}
+
+	for i := range monkeys {
+		monkeys[i].SetTotalMod(total_mod)
 	}
 
 	return monkeys
@@ -109,25 +117,17 @@ func getMonkeyBusiness(monkeys []monkey.Monkey) int {
 }
 
 func part1(file_name string) int {
-	monkeys := getMonkeys(file_name)
+	monkeys := getMonkeys(file_name, 3)
 	runMonkeyThrowRounds(20, monkeys)
 
 	return getMonkeyBusiness(monkeys)
 }
 
 func part2(file_name string) int {
-	total_score := 0
+	monkeys := getMonkeys(file_name, 1)
+	runMonkeyThrowRounds(10000, monkeys)
 
-	// file, err := os.Open(file_name)
-	// check(err)
-
-	// scanner := bufio.NewScanner(file)
-
-	// for scanner.Scan() {
-	// 	line := scanner.Text()
-	// }
-
-	return total_score
+	return getMonkeyBusiness(monkeys)
 }
 
 func main() {
