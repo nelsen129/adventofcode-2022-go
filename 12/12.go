@@ -32,25 +32,32 @@ func getMap(file_name string) [][]rune {
 	return height_map
 }
 
-func getStart(height_map [][]rune) []int {
+func getStarts(height_map [][]rune, start_runes []rune) [][]int {
+	var starts [][]int
+
 	for i := range height_map {
 		for j := range height_map[i] {
-			if height_map[i][j] == 'S' {
-				return []int{i, j}
+			for s_i := range start_runes {
+				if height_map[i][j] == start_runes[s_i] {
+					starts = append(starts, []int{i, j})
+				}
 			}
 		}
 	}
 
-	return []int{-1, -1}
+	return starts
 }
 
-func getSteps(height_map [][]rune) int {
-	start := getStart(height_map)
+func getSteps(height_map [][]rune, start_runes []rune) int {
+	starts := getStarts(height_map, start_runes)
 
 	visited := make(map[[2]int]int)
-	check_queue := make([][2]int, 1)
-	check_queue[0] = [2]int{start[0], start[1]}
-	visited[check_queue[0]] = 0
+	check_queue := make([][2]int, len(starts))
+
+	for i := range starts {
+		check_queue[i] = [2]int{starts[i][0], starts[i][1]}
+		visited[check_queue[i]] = 0
+	}
 
 	for len(check_queue) != 0 {
 		var coord [2]int
@@ -86,24 +93,19 @@ func getSteps(height_map [][]rune) int {
 }
 
 func part1(file_name string) int {
+	start_runes := []rune{'S'}
+
 	height_map := getMap(file_name)
-	total_steps := getSteps(height_map)
+	total_steps := getSteps(height_map, start_runes)
 	return total_steps
 }
 
 func part2(file_name string) int {
-	total_score := 0
+	start_runes := []rune{'S', 'a'}
 
-	// file, err := os.Open(file_name)
-	// check(err)
-
-	// scanner := bufio.NewScanner(file)
-
-	// for scanner.Scan() {
-	// 	line := scanner.Text()
-	// }
-
-	return total_score
+	height_map := getMap(file_name)
+	total_steps := getSteps(height_map, start_runes)
+	return total_steps
 }
 
 func main() {
