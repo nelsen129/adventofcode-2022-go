@@ -1,8 +1,9 @@
 package wall
 
 type Wall struct {
-	wall  map[complex128]rune
-	max_y float64
+	wall           map[complex128]rune
+	max_y          float64
+	checked_points []complex128
 }
 
 func NewWall() *Wall {
@@ -78,8 +79,22 @@ func (W *Wall) getNextSandPoint(point complex128) (complex128, bool) {
 	return point, false
 }
 
+func (W *Wall) popCheckedPoint() (complex128, bool) {
+	if len(W.checked_points) <= 0 {
+		return complex(0, 0), false
+	}
+	tmp := W.checked_points[len(W.checked_points)-1]
+	W.checked_points = W.checked_points[:len(W.checked_points)-1]
+	return tmp, true
+}
+
 func (W *Wall) AddSand(point complex128, timeout int) bool {
-	point_curr := point
+	var point_curr complex128
+	if len(W.checked_points) != 0 {
+		point_curr = W.checked_points[len(W.checked_points)-1]
+	} else {
+		point_curr = point
+	}
 	moved := true
 	if timeout == 0 {
 		timeout = 300
@@ -87,9 +102,11 @@ func (W *Wall) AddSand(point complex128, timeout int) bool {
 	for i := 0; i < timeout; i++ {
 		point_curr, moved = W.getNextSandPoint(point_curr)
 		if !moved {
+			W.popCheckedPoint()
 			W.wall[point_curr] = 'o'
 			return true
 		}
+		W.checked_points = append(W.checked_points, point_curr)
 	}
 
 	return false
@@ -99,11 +116,17 @@ func (W *Wall) AddSandWithFloor(point complex128) bool {
 	if W.checkPoint(point) {
 		return false
 	}
-	point_curr := point
+	var point_curr complex128
+	if len(W.checked_points) != 0 {
+		point_curr = W.checked_points[len(W.checked_points)-1]
+	} else {
+		point_curr = point
+	}
 	moved := true
 	for {
 		point_curr, moved = W.getNextSandPoint(point_curr)
 		if !moved {
+			W.popCheckedPoint()
 			W.wall[point_curr] = 'o'
 			return true
 		}
@@ -111,5 +134,6 @@ func (W *Wall) AddSandWithFloor(point complex128) bool {
 			W.wall[point_curr] = 'o'
 			return true
 		}
+		W.checked_points = append(W.checked_points, point_curr)
 	}
 }
