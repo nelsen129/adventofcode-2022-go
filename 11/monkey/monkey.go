@@ -13,7 +13,7 @@ func check(e error) {
 
 type Monkey struct {
 	items          []int
-	operation_comb string
+	operation_comb rune
 	operation_num  [2]int
 	test_div       int
 	true_monkey    int
@@ -44,7 +44,7 @@ func (M *Monkey) AddItem(item int) {
 
 func (M *Monkey) SetOperation(operation string) {
 	operation_split := strings.Split(operation, " ")
-	M.operation_comb = operation_split[1]
+	M.operation_comb = []rune(operation_split[1])[0]
 	var value_1, value_2 int
 	var err error
 
@@ -115,13 +115,13 @@ func (M *Monkey) runOperation(item int) int {
 		value_2 = item
 	}
 
-	if M.operation_comb == "+" {
+	if M.operation_comb == '+' {
 		return value_1 + value_2
-	} else if M.operation_comb == "*" {
+	} else if M.operation_comb == '*' {
 		return value_1 * value_2
-	} else if M.operation_comb == "-" {
+	} else if M.operation_comb == '-' {
 		return value_1 - value_2
-	} else if M.operation_comb == "/" {
+	} else if M.operation_comb == '/' {
 		return value_1 / value_2
 	}
 
