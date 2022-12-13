@@ -43,18 +43,29 @@ func part1(file_name string) int {
 }
 
 func part2(file_name string) int {
-	total_score := 0
+	var all_signals signals.Signals
 
-	// file, err := os.Open(file_name)
-	// check(err)
+	file, err := os.Open(file_name)
+	check(err)
 
-	// scanner := bufio.NewScanner(file)
+	scanner := bufio.NewScanner(file)
 
-	// for scanner.Scan() {
-	// 	line := scanner.Text()
-	// }
+	for scanner.Scan() {
+		line := scanner.Text()
+		if line == "" {
+			continue
+		}
+		all_signals.AddSignal(line)
+	}
+	all_signals.AddSignal("[[2]]")
+	all_signals.AddSignal("[[6]]")
+	all_signals.SortSignals()
 
-	return total_score
+	divider_indices := [2]int{-1, -1}
+	divider_indices[0] = all_signals.GetSignalIndex("[[2]]")
+	divider_indices[1] = all_signals.GetSignalIndex("[[6]]")
+
+	return divider_indices[0] * divider_indices[1]
 }
 
 func main() {
