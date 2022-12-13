@@ -1,75 +1,75 @@
 package wall
 
 type Wall struct {
-	wall  map[[2]int]rune
-	max_y int
+	wall  map[complex128]rune
+	max_y float64
 }
 
 func NewWall() *Wall {
 	W := Wall{}
-	W.wall = make(map[[2]int]rune)
+	W.wall = make(map[complex128]rune)
 	return &W
 }
 
-func movePoint(point [2]int, dest [2]int, step int) [2]int {
+func movePoint(point complex128, dest complex128, step float64) complex128 {
 	if step == 0 {
 		step = 1
 	}
-	if dest[0] > point[0] {
-		return [2]int{point[0] + step, point[1]}
+	if real(dest) > real(point) {
+		return point + complex(step, 0)
 	}
-	if dest[0] < point[0] {
-		return [2]int{point[0] - step, point[1]}
+	if real(dest) < real(point) {
+		return point - complex(step, 0)
 	}
-	if dest[1] > point[1] {
-		return [2]int{point[0], point[1] + step}
+	if imag(dest) > imag(point) {
+		return point + complex(0, step)
 	}
-	if dest[1] < point[1] {
-		return [2]int{point[0], point[1] - step}
+	if imag(dest) < imag(point) {
+		return point - complex(0, step)
 	}
 	return point
 }
 
-func (W *Wall) AddPathSegment(point1, point2 [2]int) {
+func (W *Wall) AddPathSegment(point1, point2 complex128) {
 	point_curr := point1
 	for point_curr != point2 {
 		W.wall[point_curr] = '#'
 		point_curr = movePoint(point_curr, point2, 1)
 	}
-	if point1[1] > W.max_y {
-		W.max_y = point1[1]
+	if imag(point1) > W.max_y {
+		W.max_y = imag(point1)
 	}
-	if point2[1] > W.max_y {
-		W.max_y = point2[1]
+	if imag(point2) > W.max_y {
+		W.max_y = imag(point2)
 	}
 	W.wall[point2] = '#'
 }
 
-func (W *Wall) AddPath(path [][2]int) {
+func (W *Wall) AddPath(path []complex128) {
 	for i := 0; i < len(path)-1; i++ {
 		W.AddPathSegment(path[i], path[i+1])
 	}
 }
 
-func (W *Wall) checkPoint(point [2]int) bool {
+func (W *Wall) checkPoint(point complex128) bool {
 	_, ok := W.wall[point]
 	return ok
 }
 
-func (W *Wall) getNextSandPoint(point [2]int) ([2]int, bool) {
-	point_check := [2]int{point[0], point[1] + 1}
+func (W *Wall) getNextSandPoint(point complex128) (complex128, bool) {
+	point_check := point + (1i)
 	if !W.checkPoint(point_check) {
 		return point_check, true
 	}
 
 	// check below left
-	point_check = [2]int{point[0] - 1, point[1] + 1}
+	point_check = point + (-1 + 1i)
 	if !W.checkPoint(point_check) {
 		return point_check, true
 	}
 
 	// check below right
-	point_check = [2]int{point[0] + 1, point[1] + 1}
+	point_check = point + (1 + 1i)
 	if !W.checkPoint(point_check) {
 		return point_check, true
 	}
@@ -78,7 +78,7 @@ func (W *Wall) getNextSandPoint(point [2]int) ([2]int, bool) {
 	return point, false
 }
 
-func (W *Wall) AddSand(point [2]int, timeout int) bool {
+func (W *Wall) AddSand(point complex128, timeout int) bool {
 	point_curr := point
 	moved := true
 	if timeout == 0 {
@@ -95,7 +95,7 @@ func (W *Wall) AddSand(point [2]int, timeout int) bool {
 	return false
 }
 
-func (W *Wall) AddSandWithFloor(point [2]int) bool {
+func (W *Wall) AddSandWithFloor(point complex128) bool {
 	if W.checkPoint(point) {
 		return false
 	}
@@ -107,7 +107,7 @@ func (W *Wall) AddSandWithFloor(point [2]int) bool {
 			W.wall[point_curr] = 'o'
 			return true
 		}
-		if point_curr[1] > W.max_y {
+		if imag(point_curr) > W.max_y {
 			W.wall[point_curr] = 'o'
 			return true
 		}
