@@ -73,18 +73,14 @@ func part1(file_name string) int {
 }
 
 func part2(file_name string) int {
-	total_score := 0
+	total_sand := 0
+	wall := createWall(file_name)
 
-	// file, err := os.Open(file_name)
-	// check(err)
+	for wall.AddSandWithFloor([2]int{500, 0}) {
+		total_sand++
+	}
 
-	// scanner := bufio.NewScanner(file)
-
-	// for scanner.Scan() {
-	// 	line := scanner.Text()
-	// }
-
-	return total_score
+	return total_sand
 }
 
 func main() {
