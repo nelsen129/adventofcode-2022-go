@@ -3,29 +3,25 @@ package tunnel
 import "fmt"
 
 type Room struct {
-	name                 string
-	flow_rate            int
-	tunnels              []*Room
-	max_pressure_at_time map[int]int
-	max_rate_at_time     map[int]int
+	name      string
+	flow_rate int
+	tunnels   []*Room
 }
 
 type roomStackItem struct {
-	room          *Room
-	opened_valves map[string]int
-	curr_pressure int
-	curr_time     int
-	curr_rate     int
-	moved         bool
+	room           *Room
+	opened_valves  map[string]int
+	curr_pressure  int
+	curr_time      int
+	curr_rate      int
+	prev_room_name string
 }
 
 func NewRoom(name string, flow_rate int, tunnels []*Room) *Room {
 	room := Room{
-		name:                 name,
-		flow_rate:            flow_rate,
-		tunnels:              tunnels,
-		max_pressure_at_time: make(map[int]int),
-		max_rate_at_time:     make(map[int]int),
+		name:      name,
+		flow_rate: flow_rate,
+		tunnels:   tunnels,
 	}
 	return &room
 }
@@ -60,12 +56,12 @@ func (Rsi *roomStackItem) passTime() {
 
 func (Rsi *roomStackItem) moveOpenValve() *roomStackItem {
 	room_stack_next := roomStackItem{
-		room:          Rsi.room,
-		opened_valves: make(map[string]int),
-		curr_pressure: Rsi.curr_pressure,
-		curr_time:     Rsi.curr_time,
-		curr_rate:     Rsi.curr_rate,
-		moved:         false,
+		room:           Rsi.room,
+		opened_valves:  make(map[string]int),
+		curr_pressure:  Rsi.curr_pressure,
+		curr_time:      Rsi.curr_time,
+		curr_rate:      Rsi.curr_rate,
+		prev_room_name: Rsi.room.name,
 	}
 	for key, val := range Rsi.opened_valves {
 		room_stack_next.opened_valves[key] = val
@@ -77,12 +73,12 @@ func (Rsi *roomStackItem) moveOpenValve() *roomStackItem {
 
 func (Rsi *roomStackItem) moveAdjacentRoom(adj_room Room) *roomStackItem {
 	room_stack_next := roomStackItem{
-		room:          &adj_room,
-		opened_valves: Rsi.opened_valves,
-		curr_pressure: Rsi.curr_pressure,
-		curr_time:     Rsi.curr_time,
-		curr_rate:     Rsi.curr_rate,
-		moved:         true,
+		room:           &adj_room,
+		opened_valves:  Rsi.opened_valves,
+		curr_pressure:  Rsi.curr_pressure,
+		curr_time:      Rsi.curr_time,
+		curr_rate:      Rsi.curr_rate,
+		prev_room_name: Rsi.room.name,
 	}
 	room_stack_next.passTime()
 	return &room_stack_next
@@ -92,6 +88,9 @@ func (Rsi *roomStackItem) moveAdjacentRooms() []*roomStackItem {
 	var room_stack_nexts []*roomStackItem
 
 	for i := range Rsi.room.tunnels {
+		if Rsi.room.tunnels[i].name == Rsi.prev_room_name { // immediate backtracking
+			continue
+		}
 		room_stack_next := Rsi.moveAdjacentRoom(*Rsi.room.tunnels[i])
 		room_stack_nexts = append(room_stack_nexts, room_stack_next)
 	}
@@ -109,11 +108,11 @@ func FindOptimalRoute(rooms map[string]*Room, start string, time int) int {
 	}
 
 	room_stack_first := roomStackItem{
-		room:          rooms[start],
-		opened_valves: make(map[string]int),
-		curr_pressure: 0,
-		curr_time:     0,
-		moved:         false,
+		room:           rooms[start],
+		opened_valves:  make(map[string]int),
+		curr_pressure:  0,
+		curr_time:      0,
+		prev_room_name: "",
 	}
 
 	room_stack := []*roomStackItem{&room_stack_first}
@@ -122,18 +121,8 @@ func FindOptimalRoute(rooms map[string]*Room, start string, time int) int {
 		room_stack_curr := room_stack[0]
 		room_stack = room_stack[1:]
 
-		max_pressure_at_time, pressure_ok := room_stack_curr.room.max_pressure_at_time[room_stack_curr.curr_time]
-		max_rate_at_time, rate_ok := room_stack_curr.room.max_rate_at_time[room_stack_curr.curr_time]
-		if rate_ok && max_rate_at_time > room_stack_curr.curr_rate && pressure_ok && max_pressure_at_time > room_stack_curr.curr_pressure {
+		if room_stack_curr.curr_pressure < max_pressure/10 { // too low, prune this branch
 			continue
-		}
-
-		if !pressure_ok || max_pressure_at_time < room_stack_curr.curr_pressure {
-			room_stack_curr.room.max_pressure_at_time[room_stack_curr.curr_time] = room_stack_curr.curr_pressure
-		}
-
-		if !rate_ok || max_rate_at_time < room_stack_curr.curr_rate {
-			room_stack_curr.room.max_rate_at_time[room_stack_curr.curr_time] = room_stack_curr.curr_rate
 		}
 
 		if room_stack_curr.curr_pressure > max_pressure {
