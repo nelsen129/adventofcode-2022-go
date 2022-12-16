@@ -50,7 +50,7 @@ func (B *BeaconMap) AddSensor(sensor, beacon complex128) {
 	fmt.Println(sensor, beacon)
 	fmt.Println(B.beacons)
 
-	for i := float64(1); i < dist; i += 1 {
+	for i := float64(1); i <= dist; i += 1 {
 		fmt.Println("adding dist", sensor, i)
 		B.addPoints(sensor, i)
 	}
