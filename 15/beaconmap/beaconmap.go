@@ -1,81 +1,77 @@
 package beaconmap
 
 import (
-	"fmt"
 	"math"
 )
 
 type BeaconMap struct {
-	beacons map[complex128]rune
-	max_x   float64
-	min_x   float64
+	beacons     map[complex128]complex128
+	min_x       float64
+	max_x       float64
+	prev_beacon []complex128
 }
 
 func NewBeaconMap() *BeaconMap {
 	beaconmap := BeaconMap{}
-	beaconmap.beacons = make(map[complex128]rune)
+	beaconmap.beacons = make(map[complex128]complex128)
 
 	return &beaconmap
 }
 
-func (B *BeaconMap) checkPoint(point complex128) bool {
-	_, ok := B.beacons[point]
-	return ok
-}
-
-func (B *BeaconMap) addPoints(sensor complex128, dist float64) {
-	B.beacons[sensor+complex(dist, 0)] = '#'
-	B.beacons[sensor-complex(dist, 0)] = '#'
-	B.beacons[sensor+complex(0, dist)] = '#'
-	B.beacons[sensor-complex(0, dist)] = '#'
-
-	fmt.Println(sensor, complex(dist, 0), complex(0, dist))
-	fmt.Println(dist)
-
-	if real(sensor)+dist > B.max_x {
-		B.max_x = real(sensor) + dist
-	}
+func (B *BeaconMap) AddSensor(sensor, beacon complex128) {
+	B.beacons[sensor] = beacon
+	dist := getManhattanDist(sensor, beacon)
 	if real(sensor)-dist < B.min_x {
 		B.min_x = real(sensor) - dist
 	}
-
-	fmt.Println(B.beacons)
-}
-
-func (B *BeaconMap) AddSensor(sensor, beacon complex128) {
-	B.beacons[sensor] = 'S'
-
-	dist := getManhattanDist(sensor, beacon)
-
-	fmt.Println(sensor, beacon)
-	fmt.Println(B.beacons)
-
-	for i := float64(1); i < dist; i += 1 {
-		fmt.Println("adding dist", sensor, i)
-		B.addPoints(sensor, i)
+	if real(sensor)+dist > B.max_x {
+		B.max_x = real(sensor) + dist
 	}
-
-	B.beacons[beacon] = 'B'
-}
-
-func (B *BeaconMap) GetBeacons() map[complex128]rune {
-	return B.beacons
 }
 
 func (B *BeaconMap) GetBeaconCoverageAtRow(row float64) int {
-	total_coverage := 0
-	min_coord := complex(B.min_x, row)
-	max_coord := complex(B.max_x, row)
-	fmt.Println(min_coord, max_coord)
-
-	for i := min_coord; real(i) <= real(max_coord); i += 1 + 0i {
-		fmt.Println("checking", i)
-		if B.checkPoint(i) {
-			total_coverage++
+	beacon_coverage := 0
+	for x := B.min_x; x <= B.max_x; x++ {
+		x_coord := complex(x, row)
+		for signal, beacon := range B.beacons {
+			if x_coord == beacon {
+				break
+			}
+			if getManhattanDist(signal, x_coord) <= getManhattanDist(signal, beacon) {
+				beacon_coverage++
+				break
+			}
 		}
 	}
 
-	return total_coverage
+	return beacon_coverage
+}
+
+func (B *BeaconMap) GetIsolatedCoordWithinRange(coord_range float64) complex128 {
+	for x := float64(0); x <= coord_range; x++ {
+		for y := float64(0); y <= coord_range; y++ {
+			coord := complex(x, y)
+			coord_found := true
+			if B.prev_beacon != nil {
+				if getManhattanDist(B.prev_beacon[0], coord) <= getManhattanDist(B.prev_beacon[0], B.prev_beacon[1]) {
+					coord_found = false
+					continue
+				}
+			}
+			for signal, beacon := range B.beacons {
+				if getManhattanDist(signal, coord) <= getManhattanDist(signal, beacon) {
+					coord_found = false
+					B.prev_beacon = []complex128{signal, beacon}
+
+					break
+				}
+			}
+			if coord_found {
+				return coord
+			}
+		}
+	}
+	return complex(-1, -1)
 }
 
 func getManhattanDist(p1, p2 complex128) float64 {

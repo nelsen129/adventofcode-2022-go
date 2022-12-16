@@ -72,26 +72,19 @@ func part1(file_name string) int {
 	for i := range sensor_beacon_list {
 		beaconmap.AddSensor(sensor_beacon_list[i][0], sensor_beacon_list[i][1])
 	}
-
-	fmt.Println(beaconmap)
-	fmt.Println(len(beaconmap.GetBeacons()))
-
-	return beaconmap.GetBeaconCoverageAtRow(10)
+	return beaconmap.GetBeaconCoverageAtRow(2000000)
 }
 
 func part2(file_name string) int {
-	total_score := 0
+	sensor_beacon_list := getSensorBeaconList(file_name)
+	beaconmap := beaconmap.NewBeaconMap()
 
-	// file, err := os.Open(file_name)
-	// check(err)
-
-	// scanner := bufio.NewScanner(file)
-
-	// for scanner.Scan() {
-	// 	line := scanner.Text()
-	// }
-
-	return total_score
+	for i := range sensor_beacon_list {
+		beaconmap.AddSensor(sensor_beacon_list[i][0], sensor_beacon_list[i][1])
+	}
+	isolated_coord := beaconmap.GetIsolatedCoordWithinRange(4000000)
+	fmt.Println(isolated_coord)
+	return int(4000000*real(isolated_coord) + imag(isolated_coord))
 }
 
 func main() {
