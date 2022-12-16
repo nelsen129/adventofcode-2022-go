@@ -73,13 +73,7 @@ func getRoomsFromFileName(file_name string) map[string]*tunnel.Room {
 func part1(file_name string) int {
 	rooms := getRoomsFromFileName(file_name)
 
-	for _, room := range rooms {
-		room.DisplayRoom()
-	}
-
-	fmt.Println("Number of rooms", len(rooms))
-
-	return tunnel.FindOptimalRoute(rooms, "", 30)
+	return tunnel.FindOptimalRoute(rooms, "", 30, 0)
 }
 
 func part2(file_name string) int {
