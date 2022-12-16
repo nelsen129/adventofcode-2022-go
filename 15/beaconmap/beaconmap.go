@@ -48,27 +48,37 @@ func (B *BeaconMap) GetBeaconCoverageAtRow(row float64) int {
 }
 
 func (B *BeaconMap) GetIsolatedCoordWithinRange(coord_range float64) complex128 {
-	for x := float64(0); x <= coord_range; x++ {
-		for y := float64(0); y <= coord_range; y++ {
-			coord := complex(x, y)
-			coord_found := true
-			if B.prev_beacon != nil {
-				if getManhattanDist(B.prev_beacon[0], coord) <= getManhattanDist(B.prev_beacon[0], B.prev_beacon[1]) {
-					coord_found = false
-					continue
-				}
-			}
-			for signal, beacon := range B.beacons {
-				if getManhattanDist(signal, coord) <= getManhattanDist(signal, beacon) {
-					coord_found = false
-					B.prev_beacon = []complex128{signal, beacon}
+	possible_coords := make(map[complex128]rune)
 
-					break
+	for sensor, beacon := range B.beacons {
+		dist := getManhattanDist(sensor, beacon)
+		for x := float64(0); x <= dist+1; x++ {
+			y := dist + 1 - x
+			points := []complex128{
+				sensor + complex(x, y),
+				sensor + complex(-x, y),
+				sensor + complex(-x, -y),
+				sensor + complex(-x, -y),
+			}
+
+			for i := range points {
+				if real(points[i]) >= 0 && real(points[i]) <= coord_range && imag(points[i]) >= 0 && imag(points[i]) <= coord_range {
+					possible_coords[points[i]] = 'p'
 				}
 			}
-			if coord_found {
-				return coord
+		}
+	}
+
+	for coord := range possible_coords {
+		coord_found := true
+		for sensor, beacon := range B.beacons {
+			if getManhattanDist(sensor, coord) <= getManhattanDist(sensor, beacon) {
+				coord_found = false
+				break
 			}
+		}
+		if coord_found {
+			return coord
 		}
 	}
 	return complex(-1, -1)

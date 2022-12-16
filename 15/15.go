@@ -83,7 +83,6 @@ func part2(file_name string) int {
 		beaconmap.AddSensor(sensor_beacon_list[i][0], sensor_beacon_list[i][1])
 	}
 	isolated_coord := beaconmap.GetIsolatedCoordWithinRange(4000000)
-	fmt.Println(isolated_coord)
 	return int(4000000*real(isolated_coord) + imag(isolated_coord))
 }
 
