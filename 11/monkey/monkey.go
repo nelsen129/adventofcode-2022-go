@@ -13,7 +13,8 @@ func check(e error) {
 
 type Monkey struct {
 	items          []int
-	operation      string
+	operation_comb rune
+	operation_num  [2]int
 	test_div       int
 	true_monkey    int
 	false_monkey   int
@@ -42,7 +43,26 @@ func (M *Monkey) AddItem(item int) {
 }
 
 func (M *Monkey) SetOperation(operation string) {
-	M.operation = operation
+	operation_split := strings.Split(operation, " ")
+	M.operation_comb = []rune(operation_split[1])[0]
+	var value_1, value_2 int
+	var err error
+
+	if operation_split[0] == "old" {
+		value_1 = 0
+	} else {
+		value_1, err = strconv.Atoi(operation_split[0])
+		check(err)
+	}
+
+	if operation_split[2] == "old" {
+		value_2 = 0
+	} else {
+		value_2, err = strconv.Atoi(operation_split[2])
+		check(err)
+	}
+
+	M.operation_num = [2]int{value_1, value_2}
 }
 
 func (M *Monkey) SetTestDiv(test_div int) {
@@ -68,7 +88,7 @@ func (M *Monkey) SetTotalMod(total_mod int) {
 func (M *Monkey) GetItemThrows() [][]int {
 	item_throws := make([][]int, len(M.items))
 	for i := range M.items {
-		worry := RunOperation(M.items[i], M.operation)
+		worry := M.runOperation(M.items[i])
 		worry /= M.worry_division
 		worry %= M.total_mod
 		throw_target := M.TestCondition(worry)
@@ -85,33 +105,23 @@ func (M *Monkey) GetThrowCount() int {
 	return M.throw_count
 }
 
-func RunOperation(item int, operation string) int {
-	operation_split := strings.Split(operation, " ")
-
-	var value_1, value_2 int
-	var err error
-
-	if operation_split[0] == "old" {
+func (M *Monkey) runOperation(item int) int {
+	value_1 := M.operation_num[0]
+	value_2 := M.operation_num[1]
+	if value_1 == 0 {
 		value_1 = item
-	} else {
-		value_1, err = strconv.Atoi(operation_split[0])
-		check(err)
 	}
-
-	if operation_split[2] == "old" {
+	if value_2 == 0 {
 		value_2 = item
-	} else {
-		value_2, err = strconv.Atoi(operation_split[2])
-		check(err)
 	}
 
-	if operation_split[1] == "+" {
+	if M.operation_comb == '+' {
 		return value_1 + value_2
-	} else if operation_split[1] == "*" {
+	} else if M.operation_comb == '*' {
 		return value_1 * value_2
-	} else if operation_split[1] == "-" {
+	} else if M.operation_comb == '-' {
 		return value_1 - value_2
-	} else if operation_split[1] == "/" {
+	} else if M.operation_comb == '/' {
 		return value_1 / value_2
 	}
 

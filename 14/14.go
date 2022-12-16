@@ -17,24 +17,20 @@ func check(e error) {
 	}
 }
 
-func getCoordFromPointString(point_string string) [2]int {
-	var coord [2]int
+func getCoordFromPointString(point_string string) complex128 {
 	coord_strings := strings.Split(point_string, ",")
 
 	x, err := strconv.Atoi(coord_strings[0])
 	check(err)
-	coord[0] = x
-
 	y, err := strconv.Atoi(coord_strings[1])
 	check(err)
-	coord[1] = y
 
-	return coord
+	return complex(float64(x), float64(y))
 }
 
-func getPathFromLine(line string) [][2]int {
+func getPathFromLine(line string) []complex128 {
 	path_strings := strings.Split(line, " -> ")
-	path := make([][2]int, len(path_strings))
+	path := make([]complex128, len(path_strings))
 
 	for i := range path_strings {
 		path[i] = getCoordFromPointString(path_strings[i])
@@ -65,7 +61,7 @@ func part1(file_name string) int {
 	total_sand := 0
 	wall := createWall(file_name)
 
-	for wall.AddSand([2]int{500, 0}, 300) {
+	for wall.AddSand(500+0i, 300) {
 		total_sand++
 	}
 
@@ -76,7 +72,7 @@ func part2(file_name string) int {
 	total_sand := 0
 	wall := createWall(file_name)
 
-	for wall.AddSandWithFloor([2]int{500, 0}) {
+	for wall.AddSandWithFloor(500 + 0i) {
 		total_sand++
 	}
 
