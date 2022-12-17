@@ -111,11 +111,11 @@ func (Rsi *roomStackItem) moveAdjacentRooms(room_index int) []*roomStackItem {
 func (Rsi *roomStackItem) searchRooms(room_index int) []*roomStackItem {
 	var room_stack_nexts []*roomStackItem
 
+	room_stack_nexts = append(room_stack_nexts, Rsi.moveAdjacentRooms(room_index)...)
+
 	if Rsi.rooms[room_index].flow_rate != 0 && !Rsi.checkValveIsOpened(room_index) {
 		room_stack_nexts = append(room_stack_nexts, Rsi.moveOpenValve(room_index))
 	}
-
-	room_stack_nexts = append(room_stack_nexts, Rsi.moveAdjacentRooms(room_index)...)
 
 	return room_stack_nexts
 }
@@ -133,6 +133,14 @@ func FindOptimalRoute(rooms map[string]*Room, start string, time int, num_search
 		num_searchers = 1
 	}
 
+	var useful_valves []string
+	for name, room := range rooms {
+		if room.flow_rate > 0 {
+			useful_valves = append(useful_valves, name)
+		}
+	}
+	useful_valve_count := len(useful_valves)
+
 	room_stack_first := roomStackItem{
 		rooms:           make([]*Room, num_searchers),
 		opened_valves:   make(map[string]int),
@@ -146,7 +154,9 @@ func FindOptimalRoute(rooms map[string]*Room, start string, time int, num_search
 
 	room_stack := []*roomStackItem{&room_stack_first}
 
+	room_iterations := 0
 	for len(room_stack) != 0 {
+		room_iterations++
 		room_stack_curr := room_stack[len(room_stack)-1]
 		room_stack = room_stack[:len(room_stack)-1]
 
@@ -160,8 +170,16 @@ func FindOptimalRoute(rooms map[string]*Room, start string, time int, num_search
 
 		if room_stack_curr.curr_pressure > max_pressure {
 			max_pressure = room_stack_curr.curr_pressure
+			fmt.Println("max pressure at", room_stack_curr)
+			fmt.Println("checks left", len(room_stack))
 		}
 		if room_stack_curr.curr_time >= time {
+			continue
+		}
+
+		if len(room_stack_curr.opened_valves) == useful_valve_count {
+			room_stack_curr.passTime()
+			room_stack = append(room_stack, room_stack_curr)
 			continue
 		}
 
@@ -180,6 +198,7 @@ func FindOptimalRoute(rooms map[string]*Room, start string, time int, num_search
 		}
 		room_stack = append(room_stack, room_stack_nexts...)
 	}
+	fmt.Println("iterations", room_iterations)
 
 	return max_pressure
 }
