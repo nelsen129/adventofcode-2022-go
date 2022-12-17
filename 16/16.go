@@ -54,7 +54,7 @@ func getRoomsFromFileName(file_name string) map[string]*tunnel.Room {
 		flow_rate := getFlowRateFromLine(line)
 		adj_rooms := getAdjRoomsFromLine(line)
 
-		room := tunnel.NewRoom(room_name, flow_rate, []*tunnel.Room{})
+		room := tunnel.NewRoom(room_name, flow_rate)
 		rooms[room_name] = room
 		room_adjacency[room_name] = adj_rooms
 	}
@@ -63,7 +63,7 @@ func getRoomsFromFileName(file_name string) map[string]*tunnel.Room {
 		for i := range room_adjacency[room_name] {
 			adj_room_name := room_adjacency[room_name][i]
 			adj_room := rooms[adj_room_name]
-			room.AddTunnel(adj_room)
+			room.AddTunnel(adj_room, 1)
 		}
 	}
 
@@ -90,7 +90,7 @@ func main() {
 
 	fmt.Println("Part 1:", part1(file_path))
 
-	fmt.Println("Part 2:", part2(file_path))
+	// fmt.Println("Part 2:", part2(file_path))
 
 	duration := time.Since(start)
 
