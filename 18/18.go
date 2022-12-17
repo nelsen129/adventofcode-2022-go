@@ -41,22 +41,12 @@ func getDropletFromFileName(file_name string) *droplet.Droplet {
 
 func part1(file_name string) int {
 	droplet := getDropletFromFileName(file_name)
-	return droplet.GetSurfaceArea()
+	return droplet.GetSurfaceAreaIncludingInterior()
 }
 
 func part2(file_name string) int {
-	total_score := 0
-
-	// file, err := os.Open(file_name)
-	// check(err)
-
-	// scanner := bufio.NewScanner(file)
-
-	// for scanner.Scan() {
-	// 	line := scanner.Text()
-	// }
-
-	return total_score
+	droplet := getDropletFromFileName(file_name)
+	return droplet.GetSurfaceAreaExcludingInterior()
 }
 
 func main() {
