@@ -174,5 +174,3 @@ func (B *Blueprint) GetGeodeProduction(time int) int {
 
 	return max_geodes
 }
-
-func getGeodeProduction()
