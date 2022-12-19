@@ -77,7 +77,7 @@ func (Bsi *BlueprintStackItem) getNextBlueprintStacks(max_time int) []*Blueprint
 	var next_blueprint_stack []*BlueprintStackItem
 
 	// check which robot to build next
-	// best_time := max_time
+	best_time := max_time
 	for i := len(Bsi.curr_robots) - 1; i >= 0; i-- {
 		robot_time, ok := Bsi.getTimeUntilRobot(i)
 		if !ok {
@@ -89,11 +89,18 @@ func (Bsi *BlueprintStackItem) getNextBlueprintStacks(max_time int) []*Blueprint
 		if Bsi.curr_time+robot_time > max_time {
 			continue
 		}
-		// if robot_time > best_time { // don't build if takes longer than a geode robot
-		// 	continue
-		// } else if i == len(Bsi.curr_robots)-1 {
-		// 	best_time = robot_time
-		// }
+		if robot_time > best_time { // don't build if takes longer than a geode robot
+			continue
+		} else if i == len(Bsi.curr_robots)-1 {
+			best_time = robot_time
+		}
+
+		if i < len(Bsi.curr_robots)-1 { // don't build if robots produce more than we can consume
+			if Bsi.curr_robots[i] >= Bsi.blueprint.getMaxResourceCost(i) {
+				continue
+			}
+		}
+
 		next_blueprint_stack_item := Bsi.copyBlueprintStackItem()
 		next_blueprint_stack_item.advanceTime(robot_time)
 		next_blueprint_stack_item.purchaseRobot(i)
@@ -126,6 +133,16 @@ func (Bsi *BlueprintStackItem) isWorseThan(other_bsi *BlueprintStackItem) bool {
 		}
 	}
 	return true
+}
+
+func (B *Blueprint) getMaxResourceCost(resource_index int) int {
+	var max_cost int
+	for i := range B.robot_costs {
+		if B.robot_costs[i][resource_index] > max_cost {
+			max_cost = B.robot_costs[i][resource_index]
+		}
+	}
+	return max_cost
 }
 
 func (B *Blueprint) GetGeodeProduction(time int) int {
