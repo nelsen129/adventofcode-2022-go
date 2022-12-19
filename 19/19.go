@@ -83,7 +83,7 @@ func part1(file_name string) int {
 }
 
 func part2(file_name string) int {
-	total_quality := 0
+	total_quality := 1
 
 	blueprints := getBlueprintsFromFileName(file_name)
 	fmt.Println(blueprints)
@@ -92,7 +92,7 @@ func part2(file_name string) int {
 			break
 		}
 		fmt.Println(blueprints[i])
-		total_quality *= blueprints[i].GetGeodeProduction(32) * blueprints[i].GetID()
+		total_quality *= blueprints[i].GetGeodeProduction(32)
 	}
 
 	return total_quality
