@@ -70,31 +70,32 @@ func getBlueprintsFromFileName(file_name string) []*blueprint.Blueprint {
 }
 
 func part1(file_name string) int {
-	total_quality := 0
+	total_quality := 1
 
 	blueprints := getBlueprintsFromFileName(file_name)
 	fmt.Println(blueprints)
 	for i := range blueprints {
 		fmt.Println(blueprints[i])
-		total_quality += blueprints[i].GetGeodeProduction(24)
+		total_quality += blueprints[i].GetGeodeProduction(24) * blueprints[i].GetID()
 	}
 
 	return total_quality
 }
 
 func part2(file_name string) int {
-	total_score := 0
+	total_quality := 0
 
-	// file, err := os.Open(file_name)
-	// check(err)
+	blueprints := getBlueprintsFromFileName(file_name)
+	fmt.Println(blueprints)
+	for i := range blueprints {
+		if i >= 3 {
+			break
+		}
+		fmt.Println(blueprints[i])
+		total_quality *= blueprints[i].GetGeodeProduction(32) * blueprints[i].GetID()
+	}
 
-	// scanner := bufio.NewScanner(file)
-
-	// for scanner.Scan() {
-	// 	line := scanner.Text()
-	// }
-
-	return total_score
+	return total_quality
 }
 
 func main() {

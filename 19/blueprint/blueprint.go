@@ -24,6 +24,10 @@ func NewBlueprint(id int, robot_costs [][]int) *Blueprint {
 	return &B
 }
 
+func (B *Blueprint) GetID() int {
+	return B.id
+}
+
 func (Bsi *BlueprintStackItem) copyBlueprintStackItem() *BlueprintStackItem {
 	new_bsi := BlueprintStackItem{
 		blueprint:      Bsi.blueprint,
@@ -72,15 +76,9 @@ func (Bsi *BlueprintStackItem) purchaseRobot(robot_index int) {
 func (Bsi *BlueprintStackItem) getNextBlueprintStacks(max_time int) []*BlueprintStackItem {
 	var next_blueprint_stack []*BlueprintStackItem
 
-	// option for no decision, just passing time
-	if Bsi.curr_time < max_time {
-		next_blueprint_stack_item := Bsi.copyBlueprintStackItem()
-		next_blueprint_stack_item.advanceTime(max_time - Bsi.curr_time)
-		next_blueprint_stack = append(next_blueprint_stack, next_blueprint_stack_item)
-	}
-
 	// check which robot to build next
-	for i := range Bsi.curr_robots {
+	// best_time := max_time
+	for i := len(Bsi.curr_robots) - 1; i >= 0; i-- {
 		robot_time, ok := Bsi.getTimeUntilRobot(i)
 		if !ok {
 			continue
@@ -91,10 +89,22 @@ func (Bsi *BlueprintStackItem) getNextBlueprintStacks(max_time int) []*Blueprint
 		if Bsi.curr_time+robot_time > max_time {
 			continue
 		}
+		// if robot_time > best_time { // don't build if takes longer than a geode robot
+		// 	continue
+		// } else if i == len(Bsi.curr_robots)-1 {
+		// 	best_time = robot_time
+		// }
 		next_blueprint_stack_item := Bsi.copyBlueprintStackItem()
 		next_blueprint_stack_item.advanceTime(robot_time)
 		next_blueprint_stack_item.purchaseRobot(i)
 
+		next_blueprint_stack = append([]*BlueprintStackItem{next_blueprint_stack_item}, next_blueprint_stack...)
+	}
+
+	// option for no decision, just passing time
+	if Bsi.curr_time < max_time && len(next_blueprint_stack) == 0 {
+		next_blueprint_stack_item := Bsi.copyBlueprintStackItem()
+		next_blueprint_stack_item.advanceTime(max_time - Bsi.curr_time)
 		next_blueprint_stack = append(next_blueprint_stack, next_blueprint_stack_item)
 	}
 
@@ -162,5 +172,7 @@ func (B *Blueprint) GetGeodeProduction(time int) int {
 		blueprint_stack = append(blueprint_stack, curr_stack_item.getNextBlueprintStacks(time)...)
 	}
 
-	return max_geodes * B.id
+	return max_geodes
 }
+
+func getGeodeProduction()
