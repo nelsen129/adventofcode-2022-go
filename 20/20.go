@@ -35,24 +35,16 @@ func parseListFromFileName(file_name string) []int {
 
 func part1(file_name string) int {
 	encrypted_file_list := parseListFromFileName(file_name)
-	encrypted_file := file.NewEncryptedFile(encrypted_file_list)
+	encrypted_file := file.NewEncryptedFile(encrypted_file_list, 1)
 
-	return encrypted_file.DecryptFile()
+	return encrypted_file.DecryptFile(1)
 }
 
 func part2(file_name string) int {
-	total_score := 0
+	encrypted_file_list := parseListFromFileName(file_name)
+	encrypted_file := file.NewEncryptedFile(encrypted_file_list, 811589153)
 
-	// file, err := os.Open(file_name)
-	// check(err)
-
-	// scanner := bufio.NewScanner(file)
-
-	// for scanner.Scan() {
-	// 	line := scanner.Text()
-	// }
-
-	return total_score
+	return encrypted_file.DecryptFile(10)
 }
 
 func main() {
