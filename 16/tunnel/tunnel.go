@@ -162,6 +162,14 @@ func FindOptimalRoute(rooms map[string]*Room, start string, time int) int {
 		time = 30
 	}
 
+	max_pressure_for_time := make(map[int]int)
+	max_rate_for_time := make(map[int]int)
+
+	for i := 0; i < time; i++ {
+		max_pressure_for_time[i] = -1
+		max_rate_for_time[i] = -1
+	}
+
 	// collapse tunnels
 	for _, room := range rooms {
 		room.CollapseTunnels(start)
@@ -188,6 +196,18 @@ func FindOptimalRoute(rooms map[string]*Room, start string, time int) int {
 		}
 		if room_stack_curr.curr_time >= time {
 			continue
+		}
+
+		if room_stack_curr.curr_pressure < max_pressure_for_time[room_stack_curr.curr_time]/2 &&
+			room_stack_curr.curr_rate < max_rate_for_time[room_stack_curr.curr_time]/2 {
+			continue
+		}
+
+		if room_stack_curr.curr_pressure > max_pressure_for_time[room_stack_curr.curr_time] {
+			max_pressure_for_time[room_stack_curr.curr_time] = room_stack_curr.curr_pressure
+		}
+		if room_stack_curr.curr_rate > max_rate_for_time[room_stack_curr.curr_time] {
+			max_rate_for_time[room_stack_curr.curr_time] = room_stack_curr.curr_rate
 		}
 
 		if room_stack_curr.room.flow_rate != 0 && !room_stack_curr.checkValveIsOpened() {
