@@ -73,13 +73,13 @@ func getRoomsFromFileName(file_name string) map[string]*tunnel.Room {
 func part1(file_name string) int {
 	rooms := getRoomsFromFileName(file_name)
 
-	return tunnel.FindOptimalRoute(rooms, "", 30)
+	return tunnel.FindOptimalRoute(rooms, "", 30, 1)
 }
 
 func part2(file_name string) int {
 	rooms := getRoomsFromFileName(file_name)
 
-	return tunnel.FindOptimalRoute(rooms, "", 26)
+	return tunnel.FindOptimalRoute(rooms, "", 26, 2)
 }
 
 func main() {
@@ -90,7 +90,7 @@ func main() {
 
 	fmt.Println("Part 1:", part1(file_path))
 
-	// fmt.Println("Part 2:", part2(file_path))
+	fmt.Println("Part 2:", part2(file_path))
 
 	duration := time.Since(start)
 
