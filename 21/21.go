@@ -66,18 +66,10 @@ func part1(file_name string) int {
 }
 
 func part2(file_name string) int {
-	total_score := 0
+	monkeys := getMonkeysFromFileName(file_name)
+	monkeys["humn"].SetValue(-1)
 
-	// file, err := os.Open(file_name)
-	// check(err)
-
-	// scanner := bufio.NewScanner(file)
-
-	// for scanner.Scan() {
-	// 	line := scanner.Text()
-	// }
-
-	return total_score
+	return monkeys["root"].GetRootEqualHumnValue()
 }
 
 func main() {
