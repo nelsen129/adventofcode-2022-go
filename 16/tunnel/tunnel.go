@@ -5,7 +5,7 @@ import "fmt"
 type Room struct {
 	name          string
 	flow_rate     int
-	tunnels       []*Room
+	tunnels       map[string]*Room
 	tunnels_dists map[string]int
 }
 
@@ -22,59 +22,67 @@ func NewRoom(name string, flow_rate int) *Room {
 	room := Room{
 		name:          name,
 		flow_rate:     flow_rate,
-		tunnels:       make([]*Room, 0),
+		tunnels:       make(map[string]*Room),
 		tunnels_dists: make(map[string]int),
 	}
 	return &room
 }
 
 func (R *Room) AddTunnel(adj_room *Room, dist int) {
-	R.tunnels = append(R.tunnels, adj_room)
+	R.tunnels[adj_room.name] = adj_room
 	R.tunnels_dists[adj_room.name] = dist
 }
 
-func (R *Room) CollapseTunnels(keep_room string) {
-	var new_tunnels []*Room
+func (R *Room) CombineTunnels() {
+	new_tunnels, new_dists := getTunnelEnds(make(map[string]int), R, 0)
+	R.tunnels = new_tunnels
+	R.tunnels_dists = new_dists
+}
+
+func (R *Room) PruneTunnels() {
+	new_tunnels := make(map[string]*Room)
 	new_dists := make(map[string]int)
 	for tunnel := range R.tunnels {
-		this_tunnels, this_dists := getTunnelEnds([]string{R.name}, R.tunnels[tunnel], keep_room, R.tunnels_dists[R.tunnels[tunnel].name])
-		new_tunnels = append(new_tunnels, this_tunnels...)
-		for key, val := range this_dists {
-			new_dists[key] = val
+		if R.tunnels[tunnel].flow_rate == 0 || R.tunnels_dists[R.tunnels[tunnel].name] == 0 {
+			continue
 		}
+		new_tunnels[R.tunnels[tunnel].name] = R.tunnels[tunnel]
+		new_dists[R.tunnels[tunnel].name] = R.tunnels_dists[R.tunnels[tunnel].name]
 	}
 	R.tunnels = new_tunnels
 	R.tunnels_dists = new_dists
 }
 
 func (R *Room) DisplayRoom() {
-	adj_room_names := make([]string, len(R.tunnels))
-	for i := range R.tunnels {
-		adj_room_names[i] = R.tunnels[i].name
+	adj_room_names := make([]string, 0)
+	for room_name := range R.tunnels {
+		adj_room_names = append(adj_room_names, room_name)
 	}
 
 	fmt.Println("Room", R.name, "Flow rate", R.flow_rate, "Adjacent rooms", adj_room_names)
 }
 
-func getTunnelEnds(prev_room_names []string, next_room *Room, keep_room string, dist int) ([]*Room, map[string]int) {
-	if next_room.name == keep_room || next_room.flow_rate != 0 {
-		ends := []*Room{next_room}
-		dists := make(map[string]int)
-		dists[next_room.name] = dist
-		return ends, dists
-	}
-	var next_rooms []*Room
+func getTunnelEnds(prev_room_names map[string]int, next_room *Room, dist int) (map[string]*Room, map[string]int) {
+	next_rooms := make(map[string]*Room)
 	next_dists := make(map[string]int)
 
-	prev_room_names = append(prev_room_names, next_room.name)
+	if val, ok := prev_room_names[next_room.name]; !ok || dist < val {
+		prev_room_names[next_room.name] = dist
+	} else {
+		return next_rooms, next_dists
+	}
+
+	next_rooms[next_room.name] = next_room
+	next_dists[next_room.name] = dist
+
 	for i := range next_room.tunnels {
 		room := next_room.tunnels[i]
-		if checkStringInSlice(room.name, prev_room_names) {
+		if val, ok := prev_room_names[room.name]; ok && dist > val {
 			continue
 		}
-		this_next_rooms, this_dists := getTunnelEnds(prev_room_names, room, keep_room, dist+next_room.tunnels_dists[room.name])
-		next_rooms = append(next_rooms, this_next_rooms...)
+		this_next_rooms, this_dists := getTunnelEnds(prev_room_names, room, dist+next_room.tunnels_dists[room.name])
 		for key, val := range this_dists {
+			next_rooms[key] = this_next_rooms[key]
 			next_dists[key] = val
 		}
 	}
@@ -138,6 +146,9 @@ func (Rsi *roomStackItem) moveAdjacentRooms(max_time int) []*roomStackItem {
 		if Rsi.curr_time+Rsi.room.tunnels_dists[Rsi.room.tunnels[i].name] > max_time {
 			continue
 		}
+		if _, ok := Rsi.opened_valves[Rsi.room.tunnels[i].name]; ok { // don't go if we've already opened the valve
+			continue
+		}
 		room_stack_next := Rsi.moveAdjacentRoom(*Rsi.room.tunnels[i])
 		room_stack_nexts = append(room_stack_nexts, room_stack_next)
 	}
@@ -163,17 +174,21 @@ func FindOptimalRoute(rooms map[string]*Room, start string, time int) int {
 	}
 
 	max_pressure_for_time := make(map[int]int)
-	max_rate_for_time := make(map[int]int)
 
 	for i := 0; i < time; i++ {
 		max_pressure_for_time[i] = -1
-		max_rate_for_time[i] = -1
 	}
 
 	// collapse tunnels
 	for _, room := range rooms {
-		room.CollapseTunnels(start)
-		fmt.Println(room, room.tunnels, room.tunnels_dists)
+		room.CombineTunnels()
+	}
+
+	// prune tunnels
+	for _, room := range rooms {
+		room.PruneTunnels()
+		fmt.Println("")
+		fmt.Println(room)
 	}
 
 	room_stack_first := roomStackItem{
@@ -186,47 +201,41 @@ func FindOptimalRoute(rooms map[string]*Room, start string, time int) int {
 
 	room_stack := []*roomStackItem{&room_stack_first}
 
+	var iterations int
 	for len(room_stack) != 0 {
+		iterations++
 		room_stack_curr := room_stack[len(room_stack)-1]
 		room_stack = room_stack[:len(room_stack)-1]
 
 		if room_stack_curr.curr_pressure > max_pressure {
 			max_pressure = room_stack_curr.curr_pressure
 			fmt.Println("max pressure at", room_stack_curr)
+			fmt.Println("iterations", iterations)
 		}
 		if room_stack_curr.curr_time >= time {
 			continue
 		}
 
 		if room_stack_curr.curr_pressure < max_pressure_for_time[room_stack_curr.curr_time]/2 &&
-			room_stack_curr.curr_rate < max_rate_for_time[room_stack_curr.curr_time]/2 {
+			room_stack_curr.curr_pressure > 200 {
 			continue
 		}
 
-		if room_stack_curr.curr_pressure > max_pressure_for_time[room_stack_curr.curr_time] {
-			max_pressure_for_time[room_stack_curr.curr_time] = room_stack_curr.curr_pressure
-		}
-		if room_stack_curr.curr_rate > max_rate_for_time[room_stack_curr.curr_time] {
-			max_rate_for_time[room_stack_curr.curr_time] = room_stack_curr.curr_rate
+		for test_time := room_stack_curr.curr_time; test_time < time; test_time++ {
+			if room_stack_curr.curr_pressure > max_pressure_for_time[test_time] {
+				max_pressure_for_time[test_time] = room_stack_curr.curr_pressure
+			}
 		}
 
 		if room_stack_curr.room.flow_rate != 0 && !room_stack_curr.checkValveIsOpened() {
 			room_stack_next := room_stack_curr.moveOpenValve()
 			room_stack = append(room_stack, room_stack_next)
+		} else {
+			room_stack_nexts := room_stack_curr.moveAdjacentRooms(time)
+			room_stack = append(room_stack, room_stack_nexts...)
 		}
-
-		room_stack_nexts := room_stack_curr.moveAdjacentRooms(time)
-		room_stack = append(room_stack, room_stack_nexts...)
 	}
+	fmt.Println("total iterations", iterations)
 
 	return max_pressure
-}
-
-func checkStringInSlice(item string, items []string) bool {
-	for i := range items {
-		if item == items[i] {
-			return true
-		}
-	}
-	return false
 }
