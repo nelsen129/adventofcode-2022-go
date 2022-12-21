@@ -1,7 +1,5 @@
 package blueprint
 
-import "fmt"
-
 type Blueprint struct {
 	id          int
 	robot_costs [][]int
@@ -166,7 +164,6 @@ func (B *Blueprint) GetGeodeProduction(time int) int {
 		}
 		if curr_stack_item.curr_resources[len(curr_stack_item.curr_resources)-1] > max_geodes {
 			max_geodes = curr_stack_item.curr_resources[len(curr_stack_item.curr_resources)-1]
-			fmt.Println("new max geodes at", curr_stack_item)
 		}
 		if curr_stack_item.curr_time == time {
 			continue

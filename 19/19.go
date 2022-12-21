@@ -73,9 +73,7 @@ func part1(file_name string) int {
 	total_quality := 1
 
 	blueprints := getBlueprintsFromFileName(file_name)
-	fmt.Println(blueprints)
 	for i := range blueprints {
-		fmt.Println(blueprints[i])
 		total_quality += blueprints[i].GetGeodeProduction(24) * blueprints[i].GetID()
 	}
 
@@ -86,12 +84,10 @@ func part2(file_name string) int {
 	total_quality := 1
 
 	blueprints := getBlueprintsFromFileName(file_name)
-	fmt.Println(blueprints)
 	for i := range blueprints {
 		if i >= 3 {
 			break
 		}
-		fmt.Println(blueprints[i])
 		total_quality *= blueprints[i].GetGeodeProduction(32)
 	}
 
