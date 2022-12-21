@@ -1,7 +1,5 @@
 package rock
 
-import "fmt"
-
 type Rock struct {
 	points         []complex128
 	coord          complex128
@@ -187,7 +185,6 @@ func (Rw *RockWall) PlaceRock() {
 	if imag(Rw.curr_rock.points[Rw.curr_rock.top_index]) > Rw.height {
 		Rw.height = imag(Rw.curr_rock.points[Rw.curr_rock.top_index])
 	}
-	// Rw.curr_rock = nil
 }
 
 func (Rw *RockWall) CheckRockMovedByDist(dist complex128) bool {
@@ -268,7 +265,6 @@ func (Rw *RockWall) checkCycle(new_cache_item *rockCacheItem) bool {
 	if old_cache_item.wall_height-imag(old_cache_item.rock.coord) != new_cache_item.wall_height-imag(new_cache_item.rock.coord) {
 		return false
 	}
-	fmt.Println("found cycle!", old_cache_item, new_cache_item)
 
 	return true
 }
@@ -296,7 +292,6 @@ func (Rw *RockWall) CreateNumberOfRocks(num int, directions []rune, rock_shapes 
 			cycles := (num - rock_cache_item.rock_num) / (rock_cache_item.rock_num - old_cache_item.rock_num)
 			height_diff := rock_cache_item.wall_height - old_cache_item.wall_height
 			rock_num_diff := rock_cache_item.rock_num - old_cache_item.rock_num
-			fmt.Println(cycles, i, rock_num_diff)
 			Rw.height_offset += height_diff * float64(cycles)
 			i += rock_num_diff * cycles
 			Rw.cache = make(map[int]rockCacheItem)
