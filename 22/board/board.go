@@ -1,6 +1,7 @@
 package board
 
 import (
+	"fmt"
 	"strconv"
 )
 
@@ -116,5 +117,82 @@ func (B *Board) moveByInstruction(instruction string) {
 func (B *Board) MoveByInstructions(instructions []string) {
 	for i := range instructions {
 		B.moveByInstruction(instructions[i])
+	}
+}
+
+func (B *Board) getNextPositionCube() (complex128, complex128) {
+	test_position := B.curr_position + B.curr_facing
+	if _, ok := B.board_map[test_position]; ok {
+		return test_position, B.curr_facing
+	}
+
+	// if going off bottom or top of square
+	if imag(B.curr_position) == 1 && real(B.curr_position) <= 100 && B.curr_facing == 0+1i {
+		return complex(1, real(B.curr_position)+100), B.curr_facing * (0 + 1i)
+	} else if imag(B.curr_position) == 1 && real(B.curr_position) > 100 && B.curr_facing == 0-1i {
+		return complex(real(B.curr_position)-100, 200), B.curr_facing
+	} else if imag(B.curr_position) == 50 && B.curr_facing == 0+1i {
+		return complex(100, real(B.curr_position)-50), B.curr_facing * (0 + 1i)
+	} else if imag(B.curr_position) == 101 && B.curr_facing == 0-1i {
+		return complex(51, real(B.curr_position)+50), B.curr_facing * (0 + 1i)
+	} else if imag(B.curr_position) == 150 && B.curr_facing == 0+1i {
+		return complex(50, imag(B.curr_position)+100), B.curr_facing * (0 + 1i)
+	} else if imag(B.curr_position) == 200 && B.curr_facing == 0+1i {
+		return complex(real(B.curr_position)+100, 1), B.curr_facing
+	}
+
+	// left or side
+	if real(B.curr_position) == 1 && imag(B.curr_position) <= 150 && B.curr_facing == -1+0i {
+		return complex(51, 151-imag(B.curr_position)), B.curr_facing * (-1 + 0i)
+	} else if real(B.curr_position) == 1 && imag(B.curr_position) > 150 && B.curr_facing == -1+0i {
+		return complex(imag(B.curr_position)-100, 1), B.curr_facing * (0 - 1i)
+	} else if real(B.curr_position) == 50 && B.curr_facing == 1+0i {
+		return complex(imag(B.curr_position)-100, 150), B.curr_facing * (0 - 1i)
+	} else if real(B.curr_position) == 51 && imag(B.curr_position) <= 50 && B.curr_facing == -1+0i {
+		return complex(1, 151-imag(B.curr_position)), B.curr_facing * (-1 + 0i)
+	} else if real(B.curr_position) == 51 && imag(B.curr_position) > 50 && B.curr_facing == -1+0i {
+		return complex(imag(B.curr_position)-50, 101), B.curr_facing * (0 - 1i)
+	} else if real(B.curr_position) == 100 && imag(B.curr_position) <= 100 && B.curr_facing == 1+0i {
+		return complex(imag(B.curr_position)+50, 50), B.curr_facing * (0 - 1i)
+	} else if real(B.curr_position) == 100 && imag(B.curr_position) > 100 && B.curr_facing == 1+0i {
+		return complex(150, 151-imag(B.curr_position)), B.curr_facing * (-1 + 0i)
+	} else if real(B.curr_position) == 150 && B.curr_facing == 1+0i {
+		return complex(100, 151-imag(B.curr_position)), B.curr_facing * (-1 + 0i)
+	}
+
+	return 0 + 0i, 0 + 0i
+}
+
+func (B *Board) checkNextPositionCube() bool {
+	next_position, _ := B.getNextPositionCube()
+
+	return B.board_map[next_position] != '#'
+}
+
+func (B *Board) moveByInstructionCube(instruction string) {
+	fmt.Println(instruction, B.curr_position, B.curr_facing)
+	if B.curr_position == 0+0i {
+		panic("oh no")
+	}
+	if instruction == "R" {
+		// using standard computer coordinate system, so +y is down
+		B.curr_facing *= 0 + 1i
+	} else if instruction == "L" {
+		B.curr_facing *= 0 - 1i
+	} else {
+		count, err := strconv.Atoi(instruction)
+		check(err)
+		for i := 0; i < count; i++ {
+			if !B.checkNextPositionCube() {
+				break
+			}
+			B.curr_position, B.curr_facing = B.getNextPositionCube()
+		}
+	}
+}
+
+func (B *Board) MoveByInstructionsCube(instructions []string) {
+	for i := range instructions {
+		B.moveByInstructionCube(instructions[i])
 	}
 }

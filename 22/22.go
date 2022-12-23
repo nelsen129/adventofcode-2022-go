@@ -66,18 +66,10 @@ func part1(file_name string) int {
 }
 
 func part2(file_name string) int {
-	total_score := 0
+	board, instructions := getBoardFromFileName(file_name)
+	board.MoveByInstructionsCube(instructions)
 
-	// file, err := os.Open(file_name)
-	// check(err)
-
-	// scanner := bufio.NewScanner(file)
-
-	// for scanner.Scan() {
-	// 	line := scanner.Text()
-	// }
-
-	return total_score
+	return board.GetPassword()
 }
 
 func main() {
