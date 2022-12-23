@@ -1,7 +1,6 @@
 package board
 
 import (
-	"fmt"
 	"strconv"
 )
 
@@ -127,7 +126,7 @@ func (B *Board) getNextPositionCube() (complex128, complex128) {
 	}
 
 	// if going off bottom or top of square
-	if imag(B.curr_position) == 1 && real(B.curr_position) <= 100 && B.curr_facing == 0+1i {
+	if imag(B.curr_position) == 1 && real(B.curr_position) <= 100 && B.curr_facing == 0-1i {
 		return complex(1, real(B.curr_position)+100), B.curr_facing * (0 + 1i)
 	} else if imag(B.curr_position) == 1 && real(B.curr_position) > 100 && B.curr_facing == 0-1i {
 		return complex(real(B.curr_position)-100, 200), B.curr_facing
@@ -136,7 +135,7 @@ func (B *Board) getNextPositionCube() (complex128, complex128) {
 	} else if imag(B.curr_position) == 101 && B.curr_facing == 0-1i {
 		return complex(51, real(B.curr_position)+50), B.curr_facing * (0 + 1i)
 	} else if imag(B.curr_position) == 150 && B.curr_facing == 0+1i {
-		return complex(50, imag(B.curr_position)+100), B.curr_facing * (0 + 1i)
+		return complex(50, real(B.curr_position)+100), B.curr_facing * (0 + 1i)
 	} else if imag(B.curr_position) == 200 && B.curr_facing == 0+1i {
 		return complex(real(B.curr_position)+100, 1), B.curr_facing
 	}
@@ -170,10 +169,6 @@ func (B *Board) checkNextPositionCube() bool {
 }
 
 func (B *Board) moveByInstructionCube(instruction string) {
-	fmt.Println(instruction, B.curr_position, B.curr_facing)
-	if B.curr_position == 0+0i {
-		panic("oh no")
-	}
 	if instruction == "R" {
 		// using standard computer coordinate system, so +y is down
 		B.curr_facing *= 0 + 1i
