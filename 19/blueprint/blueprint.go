@@ -91,7 +91,7 @@ func (Bsi *BlueprintStackItem) getNextBlueprintStacks(max_time int) []*Blueprint
 		if robot_time <= 0 {
 			robot_time = 1
 		}
-		if Bsi.curr_time+robot_time > max_time {
+		if Bsi.curr_time+robot_time > max_time-1 {
 			continue
 		}
 		if robot_time > best_time { // don't build if takes longer than a geode robot
@@ -120,24 +120,10 @@ func (Bsi *BlueprintStackItem) getNextBlueprintStacks(max_time int) []*Blueprint
 		next_blueprint_stack = append(next_blueprint_stack, next_blueprint_stack_item)
 	}
 
-	return next_blueprint_stack
-}
+	// put the first item last so building geode robots happens first
+	next_blueprint_stack[0], next_blueprint_stack[len(next_blueprint_stack)-1] = next_blueprint_stack[len(next_blueprint_stack)-1], next_blueprint_stack[0]
 
-func (Bsi *BlueprintStackItem) isWorseThan(other_bsi *BlueprintStackItem) bool {
-	if Bsi.curr_time < other_bsi.curr_time {
-		return false
-	}
-	for i := range Bsi.curr_robots {
-		if Bsi.curr_robots[i] > other_bsi.curr_robots[i] {
-			return false
-		}
-	}
-	for i := range Bsi.curr_resources {
-		if Bsi.curr_resources[i] > other_bsi.curr_resources[i] {
-			return false
-		}
-	}
-	return true
+	return next_blueprint_stack
 }
 
 func (B *Blueprint) getMaxResourceCost(resource_index int) int {
@@ -160,11 +146,25 @@ func (B *Blueprint) GetGeodeProduction(time int) int {
 	first_stack_item.curr_robots[0] = 1
 	blueprint_stack := []*BlueprintStackItem{&first_stack_item}
 
-	best_stack_item_map := make(map[int]*BlueprintStackItem)
+	seen_state_map := make(map[[9]int]struct{})
 
 	for len(blueprint_stack) != 0 {
 		curr_stack_item := blueprint_stack[len(blueprint_stack)-1]
 		blueprint_stack = blueprint_stack[:len(blueprint_stack)-1]
+
+		var curr_state [9]int
+		for i := 0; i < 4; i++ {
+			curr_state[i] = curr_stack_item.curr_resources[i]
+		}
+		for i := 0; i < 4; i++ {
+			curr_state[i+4] = curr_stack_item.curr_robots[i]
+		}
+		curr_state[8] = curr_stack_item.curr_time
+
+		if _, ok := seen_state_map[curr_state]; ok {
+			continue
+		}
+		seen_state_map[curr_state] = struct{}{}
 
 		if curr_stack_item.curr_time > time {
 			continue
@@ -176,20 +176,6 @@ func (B *Blueprint) GetGeodeProduction(time int) int {
 			continue
 		}
 		if curr_stack_item.getMostPossibleGeodes(time) < max_geodes {
-			continue
-		}
-
-		curr_best, ok := best_stack_item_map[curr_stack_item.curr_time]
-		if !ok || curr_best.isWorseThan(curr_stack_item) {
-			for i := curr_stack_item.curr_time; i <= time; i++ {
-				curr_best, ok := best_stack_item_map[curr_stack_item.curr_time]
-				if !ok || curr_best.isWorseThan(curr_stack_item) {
-					best_stack_item_map[i] = curr_stack_item
-				} else {
-					break
-				}
-			}
-		} else if curr_stack_item.isWorseThan(curr_best) {
 			continue
 		}
 
