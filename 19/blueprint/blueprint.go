@@ -39,6 +39,13 @@ func (Bsi *BlueprintStackItem) copyBlueprintStackItem() *BlueprintStackItem {
 	return &new_bsi
 }
 
+func (Bsi *BlueprintStackItem) getMostPossibleGeodes(max_time int) int {
+	time_remaining := max_time - Bsi.curr_time
+	curr_robot_production := time_remaining * Bsi.curr_robots[len(Bsi.curr_robots)-1]
+	possible_robot_production := time_remaining * time_remaining / 2
+	return curr_robot_production + possible_robot_production + Bsi.curr_resources[len(Bsi.curr_resources)-1]
+}
+
 func (Bsi *BlueprintStackItem) getTimeUntilRobot(robot_index int) (int, bool) {
 	var robot_time int
 	for i := range Bsi.blueprint.robot_costs[robot_index] {
@@ -166,6 +173,9 @@ func (B *Blueprint) GetGeodeProduction(time int) int {
 			max_geodes = curr_stack_item.curr_resources[len(curr_stack_item.curr_resources)-1]
 		}
 		if curr_stack_item.curr_time == time {
+			continue
+		}
+		if curr_stack_item.getMostPossibleGeodes(time) < max_geodes {
 			continue
 		}
 
