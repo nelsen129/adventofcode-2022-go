@@ -185,6 +185,12 @@ func (Rsi *roomStackItem) searchRooms(room_index, max_time int) []*roomStackItem
 	return room_stack_nexts
 }
 
+func (Rsi *roomStackItem) getBestPossiblePressure(max_possible_rate, max_time int) int {
+	max_pressure := Rsi.curr_pressure
+	max_pressure += (max_time - Rsi.curr_time) * max_possible_rate
+	return max_pressure
+}
+
 func FindOptimalRoute(rooms map[string]*Room, start string, time, searchers int) int {
 	var max_pressure int
 	if start == "" {
@@ -197,12 +203,6 @@ func FindOptimalRoute(rooms map[string]*Room, start string, time, searchers int)
 		searchers = 1
 	}
 
-	max_pressure_for_time := make(map[int]int)
-
-	for i := 0; i < time; i++ {
-		max_pressure_for_time[i] = -1
-	}
-
 	// combine tunnels
 	for _, room := range rooms {
 		room.CombineTunnels()
@@ -211,6 +211,11 @@ func FindOptimalRoute(rooms map[string]*Room, start string, time, searchers int)
 	// prune tunnels
 	for _, room := range rooms {
 		room.PruneTunnels()
+	}
+
+	max_possible_rate := 0
+	for _, room := range rooms {
+		max_possible_rate += room.flow_rate
 	}
 
 	room_stack_first := roomStackItem{
@@ -239,15 +244,8 @@ func FindOptimalRoute(rooms map[string]*Room, start string, time, searchers int)
 			continue
 		}
 
-		if room_stack_curr.curr_pressure < max_pressure_for_time[room_stack_curr.curr_time]/2 &&
-			room_stack_curr.curr_pressure > 200 {
+		if room_stack_curr.getBestPossiblePressure(max_possible_rate, time) < max_pressure {
 			continue
-		}
-
-		for test_time := room_stack_curr.curr_time; test_time < time; test_time++ {
-			if room_stack_curr.curr_pressure > max_pressure_for_time[test_time] {
-				max_pressure_for_time[test_time] = room_stack_curr.curr_pressure
-			}
 		}
 
 		room_stack_currs := []*roomStackItem{room_stack_curr}
