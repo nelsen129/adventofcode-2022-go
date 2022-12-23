@@ -70,7 +70,7 @@ func getBlueprintsFromFileName(file_name string) []*blueprint.Blueprint {
 }
 
 func part1(file_name string) int {
-	total_quality := 1
+	total_quality := 0
 
 	blueprints := getBlueprintsFromFileName(file_name)
 	for i := range blueprints {
