@@ -1,6 +1,7 @@
 package tunnel
 
 import (
+	"container/heap"
 	"fmt"
 )
 
@@ -20,6 +21,8 @@ type roomStackItem struct {
 	prev_room_names []string
 	searcher_times  []int
 }
+
+type roomPriorityQueue []*roomStackItem
 
 func NewRoom(name string, flow_rate int) *Room {
 	room := Room{
@@ -149,6 +152,9 @@ func (Rsi *roomStackItem) moveAdjacentRooms(room_index, max_time int) []*roomSta
 	var room_stack_nexts []*roomStackItem
 
 	for i := range Rsi.rooms[room_index].tunnels {
+		if Rsi.getRoomNameInRooms(Rsi.rooms[room_index].tunnels[i].name) {
+			continue
+		}
 		if Rsi.rooms[room_index].tunnels[i].name == Rsi.prev_room_names[room_index] { // immediate backtracking
 			continue
 		}
@@ -191,6 +197,41 @@ func (Rsi *roomStackItem) getBestPossiblePressure(max_possible_rate, max_time in
 	return max_pressure
 }
 
+func (Rsi *roomStackItem) getRoomNameInRooms(name string) bool {
+	for i := range Rsi.rooms {
+		if Rsi.rooms[i].name == name {
+			return true
+		}
+	}
+	return false
+}
+
+func (Rpq roomPriorityQueue) Len() int {
+	return len(Rpq)
+}
+
+func (Rpq roomPriorityQueue) Less(i, j int) bool {
+	return Rpq[i].curr_pressure > Rpq[j].curr_pressure
+}
+
+func (Rpq roomPriorityQueue) Swap(i, j int) {
+	Rpq[i], Rpq[j] = Rpq[j], Rpq[i]
+}
+
+func (Rpq *roomPriorityQueue) Push(x any) {
+	item := x.(*roomStackItem)
+	*Rpq = append(*Rpq, item)
+}
+
+func (Rpq *roomPriorityQueue) Pop() any {
+	old := *Rpq
+	n := len(old)
+	item := old[n-1]
+	old[n-1] = nil
+	*Rpq = old[:n-1]
+	return item
+}
+
 func FindOptimalRoute(rooms map[string]*Room, start string, time, searchers int) int {
 	var max_pressure int
 	if start == "" {
@@ -231,11 +272,12 @@ func FindOptimalRoute(rooms map[string]*Room, start string, time, searchers int)
 		room_stack_first.rooms[i] = rooms[start]
 		room_stack_first.searcher_times[i] = 1
 	}
-	room_stack := []*roomStackItem{&room_stack_first}
+	room_priority_queue := make(roomPriorityQueue, 1)
+	room_priority_queue[0] = &room_stack_first
+	heap.Init(&room_priority_queue)
 
-	for len(room_stack) != 0 {
-		room_stack_curr := room_stack[len(room_stack)-1]
-		room_stack = room_stack[:len(room_stack)-1]
+	for len(room_priority_queue) != 0 {
+		room_stack_curr := heap.Pop(&room_priority_queue).(*roomStackItem)
 
 		if room_stack_curr.curr_pressure > max_pressure {
 			max_pressure = room_stack_curr.curr_pressure
@@ -244,7 +286,7 @@ func FindOptimalRoute(rooms map[string]*Room, start string, time, searchers int)
 			continue
 		}
 
-		if room_stack_curr.getBestPossiblePressure(max_possible_rate, time) < max_pressure {
+		if room_stack_curr.getBestPossiblePressure(max_possible_rate, time) <= max_pressure {
 			continue
 		}
 
@@ -264,8 +306,8 @@ func FindOptimalRoute(rooms map[string]*Room, start string, time, searchers int)
 
 		for i := range room_stack_nexts {
 			room_stack_nexts[i].passTime(1)
+			heap.Push(&room_priority_queue, room_stack_nexts[i])
 		}
-		room_stack = append(room_stack, room_stack_nexts...)
 	}
 
 	return max_pressure
