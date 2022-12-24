@@ -157,7 +157,12 @@ func (Rsi *roomStackItem) moveAdjacentRoom(room_index int, adj_room Room) *roomS
 func (Rsi *roomStackItem) moveAdjacentRooms(room_index, max_time int) []*roomStackItem {
 	var room_stack_nexts []*roomStackItem
 
+	var best_next_dist, best_next_rate int
+
 	for i := range Rsi.rooms[room_index].tunnels {
+		if Rsi.rooms[room_index].tunnels[i].flow_rate < best_next_rate {
+			continue
+		}
 		if Rsi.getRoomNameInRooms(Rsi.rooms[room_index].tunnels[i].name) {
 			continue
 		}
@@ -165,6 +170,26 @@ func (Rsi *roomStackItem) moveAdjacentRooms(room_index, max_time int) []*roomSta
 			continue
 		}
 		if Rsi.searcher_times[room_index]+Rsi.rooms[room_index].tunnels_dists[Rsi.rooms[room_index].tunnels[i].name] > max_time {
+			continue
+		}
+		if _, ok := Rsi.opened_valves[Rsi.rooms[room_index].tunnels[i].name]; ok { // don't go if we've already opened the valve
+			continue
+		}
+		best_next_dist = Rsi.rooms[room_index].tunnels_dists[i]
+		best_next_rate = Rsi.rooms[room_index].tunnels[i].flow_rate
+	}
+
+	for i := range Rsi.rooms[room_index].tunnels {
+		if Rsi.rooms[room_index].tunnels_dists[i] > best_next_dist {
+			continue
+		}
+		if Rsi.getRoomNameInRooms(Rsi.rooms[room_index].tunnels[i].name) {
+			continue
+		}
+		if Rsi.rooms[room_index].tunnels[i].name == Rsi.prev_room_names[room_index] { // immediate backtracking
+			continue
+		}
+		if Rsi.searcher_times[room_index]+Rsi.rooms[room_index].tunnels_dists[i] > max_time {
 			continue
 		}
 		if _, ok := Rsi.opened_valves[Rsi.rooms[room_index].tunnels[i].name]; ok { // don't go if we've already opened the valve
