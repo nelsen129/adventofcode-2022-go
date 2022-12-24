@@ -106,9 +106,15 @@ func (Rsi *roomStackItem) openValve(room_index int) {
 	Rsi.curr_rate += Rsi.rooms[room_index].flow_rate
 }
 
-func (Rsi *roomStackItem) passTime(time int) {
-	Rsi.curr_pressure += Rsi.curr_rate * time
-	Rsi.curr_time += time
+func (Rsi *roomStackItem) passTime() {
+	time_diff := Rsi.searcher_times[0] - Rsi.curr_time
+	for i := 1; i < len(Rsi.searcher_times); i++ {
+		if Rsi.searcher_times[i]-Rsi.curr_time < time_diff {
+			time_diff = Rsi.searcher_times[i] - Rsi.curr_time
+		}
+	}
+	Rsi.curr_pressure += Rsi.curr_rate * time_diff
+	Rsi.curr_time += time_diff
 }
 
 func (Rsi *roomStackItem) copyRoomStackItem() *roomStackItem {
@@ -305,7 +311,7 @@ func FindOptimalRoute(rooms map[string]*Room, start string, time, searchers int)
 		}
 
 		for i := range room_stack_nexts {
-			room_stack_nexts[i].passTime(1)
+			room_stack_nexts[i].passTime()
 			heap.Push(&room_priority_queue, room_stack_nexts[i])
 		}
 	}
