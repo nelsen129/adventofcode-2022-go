@@ -237,6 +237,36 @@ func (Rsi *roomStackItem) getRoomNameInRooms(name string) bool {
 	return false
 }
 
+func (Rsi *roomStackItem) processRoomStack(max_pressure, max_time, max_possible_rate int) []*roomStackItem {
+	var room_stack_nexts []*roomStackItem
+	if Rsi.curr_time >= max_time {
+		return room_stack_nexts
+	}
+
+	if Rsi.getBestPossiblePressure(max_possible_rate, max_time) <= max_pressure {
+		return room_stack_nexts
+	}
+
+	room_stack_currs := []*roomStackItem{Rsi}
+	for i := range Rsi.searcher_times {
+		room_stack_nexts = make([]*roomStackItem, 0)
+		for j := range room_stack_currs {
+			if room_stack_currs[j].searcher_times[i] > Rsi.curr_time {
+				room_stack_nexts = append(room_stack_nexts, room_stack_currs[j])
+				continue
+			}
+			room_stack_nexts = append(room_stack_nexts, room_stack_currs[j].searchRooms(i, max_time)...)
+		}
+		room_stack_currs = room_stack_nexts
+	}
+
+	for i := range room_stack_nexts {
+		room_stack_nexts[i].passTime()
+	}
+
+	return room_stack_nexts
+}
+
 func (Rpq roomPriorityQueue) Len() int {
 	return len(Rpq)
 }
@@ -313,30 +343,10 @@ func FindOptimalRoute(rooms map[string]*Room, start string, time, searchers int)
 		if room_stack_curr.curr_pressure > max_pressure {
 			max_pressure = room_stack_curr.curr_pressure
 		}
-		if room_stack_curr.curr_time >= time {
-			continue
-		}
 
-		if room_stack_curr.getBestPossiblePressure(max_possible_rate, time) <= max_pressure {
-			continue
-		}
-
-		room_stack_currs := []*roomStackItem{room_stack_curr}
-		var room_stack_nexts []*roomStackItem
-		for i := 0; i < searchers; i++ {
-			room_stack_nexts = make([]*roomStackItem, 0)
-			for j := range room_stack_currs {
-				if room_stack_currs[j].searcher_times[i] > room_stack_curr.curr_time {
-					room_stack_nexts = append(room_stack_nexts, room_stack_currs[j])
-					continue
-				}
-				room_stack_nexts = append(room_stack_nexts, room_stack_currs[j].searchRooms(i, time)...)
-			}
-			room_stack_currs = room_stack_nexts
-		}
+		room_stack_nexts := room_stack_curr.processRoomStack(max_pressure, time, max_possible_rate)
 
 		for i := range room_stack_nexts {
-			room_stack_nexts[i].passTime()
 			heap.Push(&room_priority_queue, room_stack_nexts[i])
 		}
 	}
