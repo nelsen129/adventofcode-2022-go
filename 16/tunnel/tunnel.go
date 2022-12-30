@@ -3,6 +3,7 @@ package tunnel
 import (
 	"container/heap"
 	"fmt"
+	"math"
 )
 
 type Room struct {
@@ -273,6 +274,7 @@ func (Rpq roomPriorityQueue) Len() int {
 
 func (Rpq roomPriorityQueue) Less(i, j int) bool {
 	return Rpq[i].curr_pressure > Rpq[j].curr_pressure
+	// return Rpq[i].curr_time < Rpq[j].curr_time
 }
 
 func (Rpq roomPriorityQueue) Swap(i, j int) {
@@ -293,6 +295,53 @@ func (Rpq *roomPriorityQueue) Pop() any {
 	return item
 }
 
+func combineTunnels(rooms []*Room) {
+	dists := make([][]int, len(rooms))
+	for i := range dists {
+		dists[i] = make([]int, len(rooms))
+		for j := range dists[i] {
+			dists[i][j] = math.MaxInt
+		}
+	}
+
+	room_index_map := make(map[string]int)
+	for room_index := range rooms {
+		room_index_map[rooms[room_index].name] = room_index
+	}
+
+	// add edges and vertices to dists
+	for room_index := range rooms {
+		for tunnel_name := range rooms[room_index].tunnels {
+			dists[room_index_map[tunnel_name]][room_index] = rooms[room_index].tunnels_dists[tunnel_name]
+		}
+		dists[room_index][room_index] = 0
+	}
+
+	// get shortest dist between each vertex
+	for k := range rooms {
+		for i := range rooms {
+			for j := range rooms {
+				if dists[i][k] > math.MaxInt-dists[k][j] { // overflow
+					continue
+				}
+				if dists[i][j] > dists[i][k]+dists[k][j] {
+					dists[i][j] = dists[i][k] + dists[k][j]
+				}
+			}
+		}
+	}
+
+	// set new tunnels to each room
+	for room_index := range rooms {
+		for tunnel_index := range rooms {
+			if room_index == tunnel_index {
+				continue
+			}
+			rooms[room_index].AddTunnel(rooms[tunnel_index], dists[room_index][tunnel_index])
+		}
+	}
+}
+
 func FindOptimalRoute(rooms map[string]*Room, start string, time, searchers int) int {
 	var max_pressure int
 	if start == "" {
@@ -306,9 +355,11 @@ func FindOptimalRoute(rooms map[string]*Room, start string, time, searchers int)
 	}
 
 	// combine tunnels
+	rooms_list := make([]*Room, 0, len(rooms))
 	for _, room := range rooms {
-		room.CombineTunnels()
+		rooms_list = append(rooms_list, room)
 	}
+	combineTunnels(rooms_list)
 
 	// prune tunnels
 	for _, room := range rooms {
