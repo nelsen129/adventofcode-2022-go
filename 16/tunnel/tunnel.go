@@ -12,7 +12,7 @@ type Room struct {
 	tunnels_dists map[string]int
 }
 
-type roomStackItem struct {
+type roomPriorityQueueItem struct {
 	rooms           []*Room
 	opened_valves   map[string]int
 	curr_pressure   int
@@ -22,7 +22,7 @@ type roomStackItem struct {
 	searcher_times  []int
 }
 
-type roomPriorityQueue []*roomStackItem
+type roomPriorityQueue []*roomPriorityQueueItem
 
 func NewRoom(name string, flow_rate int) *Room {
 	room := Room{
@@ -96,175 +96,175 @@ func getTunnelEnds(prev_room_names map[string]int, next_room *Room, dist int) (m
 	return next_rooms, next_dists
 }
 
-func (Rsi *roomStackItem) checkValveIsOpened(room_index int) bool {
-	_, ok := Rsi.opened_valves[Rsi.rooms[room_index].name]
+func (Rpqi *roomPriorityQueueItem) checkValveIsOpened(room_index int) bool {
+	_, ok := Rpqi.opened_valves[Rpqi.rooms[room_index].name]
 	return ok
 }
 
-func (Rsi *roomStackItem) openValve(room_index int) {
-	Rsi.opened_valves[Rsi.rooms[room_index].name] = Rsi.rooms[room_index].flow_rate
-	Rsi.curr_rate += Rsi.rooms[room_index].flow_rate
+func (Rpqi *roomPriorityQueueItem) openValve(room_index int) {
+	Rpqi.opened_valves[Rpqi.rooms[room_index].name] = Rpqi.rooms[room_index].flow_rate
+	Rpqi.curr_rate += Rpqi.rooms[room_index].flow_rate
 }
 
-func (Rsi *roomStackItem) passTime() {
-	time_diff := Rsi.searcher_times[0] - Rsi.curr_time
-	for i := 1; i < len(Rsi.searcher_times); i++ {
-		if Rsi.searcher_times[i]-Rsi.curr_time < time_diff {
-			time_diff = Rsi.searcher_times[i] - Rsi.curr_time
+func (Rpqi *roomPriorityQueueItem) passTime() {
+	time_diff := Rpqi.searcher_times[0] - Rpqi.curr_time
+	for i := 1; i < len(Rpqi.searcher_times); i++ {
+		if Rpqi.searcher_times[i]-Rpqi.curr_time < time_diff {
+			time_diff = Rpqi.searcher_times[i] - Rpqi.curr_time
 		}
 	}
-	Rsi.curr_pressure += Rsi.curr_rate * time_diff
-	Rsi.curr_time += time_diff
+	Rpqi.curr_pressure += Rpqi.curr_rate * time_diff
+	Rpqi.curr_time += time_diff
 }
 
-func (Rsi *roomStackItem) copyRoomStackItem() *roomStackItem {
-	room_stack_next := roomStackItem{
-		rooms:           make([]*Room, len(Rsi.rooms)),
+func (Rpqi *roomPriorityQueueItem) copyRoomPriorityQueueItem() *roomPriorityQueueItem {
+	room_item_next := roomPriorityQueueItem{
+		rooms:           make([]*Room, len(Rpqi.rooms)),
 		opened_valves:   make(map[string]int),
-		curr_pressure:   Rsi.curr_pressure,
-		curr_time:       Rsi.curr_time,
-		curr_rate:       Rsi.curr_rate,
-		prev_room_names: make([]string, len(Rsi.prev_room_names)),
-		searcher_times:  make([]int, len(Rsi.searcher_times)),
+		curr_pressure:   Rpqi.curr_pressure,
+		curr_time:       Rpqi.curr_time,
+		curr_rate:       Rpqi.curr_rate,
+		prev_room_names: make([]string, len(Rpqi.prev_room_names)),
+		searcher_times:  make([]int, len(Rpqi.searcher_times)),
 	}
-	for i := range Rsi.rooms {
-		room_stack_next.rooms[i] = Rsi.rooms[i]
-		room_stack_next.prev_room_names[i] = Rsi.prev_room_names[i]
-		room_stack_next.searcher_times[i] = Rsi.searcher_times[i]
+	for i := range Rpqi.rooms {
+		room_item_next.rooms[i] = Rpqi.rooms[i]
+		room_item_next.prev_room_names[i] = Rpqi.prev_room_names[i]
+		room_item_next.searcher_times[i] = Rpqi.searcher_times[i]
 	}
-	for key, val := range Rsi.opened_valves {
-		room_stack_next.opened_valves[key] = val
+	for key, val := range Rpqi.opened_valves {
+		room_item_next.opened_valves[key] = val
 	}
-	return &room_stack_next
+	return &room_item_next
 }
 
-func (Rsi *roomStackItem) moveOpenValve(room_index int) *roomStackItem {
-	room_stack_next := Rsi.copyRoomStackItem()
-	room_stack_next.prev_room_names[room_index] = Rsi.rooms[room_index].name
-	room_stack_next.searcher_times[room_index] += 1
-	room_stack_next.openValve(room_index)
-	return room_stack_next
+func (Rpqi *roomPriorityQueueItem) moveOpenValve(room_index int) *roomPriorityQueueItem {
+	room_item_next := Rpqi.copyRoomPriorityQueueItem()
+	room_item_next.prev_room_names[room_index] = Rpqi.rooms[room_index].name
+	room_item_next.searcher_times[room_index] += 1
+	room_item_next.openValve(room_index)
+	return room_item_next
 }
 
-func (Rsi *roomStackItem) moveAdjacentRoom(room_index int, adj_room Room) *roomStackItem {
-	room_stack_next := Rsi.copyRoomStackItem()
-	room_stack_next.rooms[room_index] = &adj_room
-	room_stack_next.prev_room_names[room_index] = Rsi.rooms[room_index].name
-	room_stack_next.searcher_times[room_index] += Rsi.rooms[room_index].tunnels_dists[adj_room.name]
-	return room_stack_next
+func (Rpqi *roomPriorityQueueItem) moveAdjacentRoom(room_index int, adj_room Room) *roomPriorityQueueItem {
+	room_item_next := Rpqi.copyRoomPriorityQueueItem()
+	room_item_next.rooms[room_index] = &adj_room
+	room_item_next.prev_room_names[room_index] = Rpqi.rooms[room_index].name
+	room_item_next.searcher_times[room_index] += Rpqi.rooms[room_index].tunnels_dists[adj_room.name]
+	return room_item_next
 }
 
-func (Rsi *roomStackItem) moveAdjacentRooms(room_index, max_time int) []*roomStackItem {
-	var room_stack_nexts []*roomStackItem
+func (Rpqi *roomPriorityQueueItem) moveAdjacentRooms(room_index, max_time int) []*roomPriorityQueueItem {
+	var room_item_nexts []*roomPriorityQueueItem
 
 	var best_next_dist, best_next_rate int
 
-	for i := range Rsi.rooms[room_index].tunnels {
-		if Rsi.rooms[room_index].tunnels[i].flow_rate < best_next_rate {
+	for i := range Rpqi.rooms[room_index].tunnels {
+		if Rpqi.rooms[room_index].tunnels[i].flow_rate < best_next_rate {
 			continue
 		}
-		if Rsi.getRoomNameInRooms(Rsi.rooms[room_index].tunnels[i].name) {
+		if Rpqi.getRoomNameInRooms(Rpqi.rooms[room_index].tunnels[i].name) {
 			continue
 		}
-		if Rsi.rooms[room_index].tunnels[i].name == Rsi.prev_room_names[room_index] { // immediate backtracking
+		if Rpqi.rooms[room_index].tunnels[i].name == Rpqi.prev_room_names[room_index] { // immediate backtracking
 			continue
 		}
-		if Rsi.searcher_times[room_index]+Rsi.rooms[room_index].tunnels_dists[Rsi.rooms[room_index].tunnels[i].name] > max_time {
+		if Rpqi.searcher_times[room_index]+Rpqi.rooms[room_index].tunnels_dists[Rpqi.rooms[room_index].tunnels[i].name] > max_time {
 			continue
 		}
-		if _, ok := Rsi.opened_valves[Rsi.rooms[room_index].tunnels[i].name]; ok { // don't go if we've already opened the valve
+		if _, ok := Rpqi.opened_valves[Rpqi.rooms[room_index].tunnels[i].name]; ok { // don't go if we've already opened the valve
 			continue
 		}
-		best_next_dist = Rsi.rooms[room_index].tunnels_dists[i]
-		best_next_rate = Rsi.rooms[room_index].tunnels[i].flow_rate
+		best_next_dist = Rpqi.rooms[room_index].tunnels_dists[i]
+		best_next_rate = Rpqi.rooms[room_index].tunnels[i].flow_rate
 	}
 
-	for i := range Rsi.rooms[room_index].tunnels {
-		if Rsi.rooms[room_index].tunnels_dists[i] > best_next_dist {
+	for i := range Rpqi.rooms[room_index].tunnels {
+		if Rpqi.rooms[room_index].tunnels_dists[i] > best_next_dist {
 			continue
 		}
-		if Rsi.getRoomNameInRooms(Rsi.rooms[room_index].tunnels[i].name) {
+		if Rpqi.getRoomNameInRooms(Rpqi.rooms[room_index].tunnels[i].name) {
 			continue
 		}
-		if Rsi.rooms[room_index].tunnels[i].name == Rsi.prev_room_names[room_index] { // immediate backtracking
+		if Rpqi.rooms[room_index].tunnels[i].name == Rpqi.prev_room_names[room_index] { // immediate backtracking
 			continue
 		}
-		if Rsi.searcher_times[room_index]+Rsi.rooms[room_index].tunnels_dists[i] > max_time {
+		if Rpqi.searcher_times[room_index]+Rpqi.rooms[room_index].tunnels_dists[i] > max_time {
 			continue
 		}
-		if _, ok := Rsi.opened_valves[Rsi.rooms[room_index].tunnels[i].name]; ok { // don't go if we've already opened the valve
+		if _, ok := Rpqi.opened_valves[Rpqi.rooms[room_index].tunnels[i].name]; ok { // don't go if we've already opened the valve
 			continue
 		}
-		room_stack_next := Rsi.moveAdjacentRoom(room_index, *Rsi.rooms[room_index].tunnels[i])
-		room_stack_nexts = append(room_stack_nexts, room_stack_next)
+		room_item_next := Rpqi.moveAdjacentRoom(room_index, *Rpqi.rooms[room_index].tunnels[i])
+		room_item_nexts = append(room_item_nexts, room_item_next)
 	}
 
 	// if no valid places left to move
-	if len(room_stack_nexts) == 0 && Rsi.curr_time < max_time {
-		room_stack_next := Rsi.copyRoomStackItem()
-		room_stack_next.prev_room_names[room_index] = Rsi.rooms[room_index].name
-		room_stack_next.searcher_times[room_index] = max_time
-		room_stack_nexts = append(room_stack_nexts, room_stack_next)
+	if len(room_item_nexts) == 0 && Rpqi.curr_time < max_time {
+		room_item_next := Rpqi.copyRoomPriorityQueueItem()
+		room_item_next.prev_room_names[room_index] = Rpqi.rooms[room_index].name
+		room_item_next.searcher_times[room_index] = max_time
+		room_item_nexts = append(room_item_nexts, room_item_next)
 	}
 
-	return room_stack_nexts
+	return room_item_nexts
 }
 
-func (Rsi *roomStackItem) searchRooms(room_index, max_time int) []*roomStackItem {
-	var room_stack_nexts []*roomStackItem
+func (Rpqi *roomPriorityQueueItem) searchRooms(room_index, max_time int) []*roomPriorityQueueItem {
+	var room_item_nexts []*roomPriorityQueueItem
 
-	if Rsi.rooms[room_index].flow_rate != 0 && !Rsi.checkValveIsOpened(room_index) {
-		room_stack_nexts = append(room_stack_nexts, Rsi.moveOpenValve(room_index))
+	if Rpqi.rooms[room_index].flow_rate != 0 && !Rpqi.checkValveIsOpened(room_index) {
+		room_item_nexts = append(room_item_nexts, Rpqi.moveOpenValve(room_index))
 	} else {
-		room_stack_nexts = append(room_stack_nexts, Rsi.moveAdjacentRooms(room_index, max_time)...)
+		room_item_nexts = append(room_item_nexts, Rpqi.moveAdjacentRooms(room_index, max_time)...)
 	}
 
-	return room_stack_nexts
+	return room_item_nexts
 }
 
-func (Rsi *roomStackItem) getBestPossiblePressure(max_possible_rate, max_time int) int {
-	max_pressure := Rsi.curr_pressure
-	max_pressure += (max_time - Rsi.curr_time) * max_possible_rate
+func (Rpqi *roomPriorityQueueItem) getBestPossiblePressure(max_possible_rate, max_time int) int {
+	max_pressure := Rpqi.curr_pressure
+	max_pressure += (max_time - Rpqi.curr_time) * max_possible_rate
 	return max_pressure
 }
 
-func (Rsi *roomStackItem) getRoomNameInRooms(name string) bool {
-	for i := range Rsi.rooms {
-		if Rsi.rooms[i].name == name {
+func (Rpqi *roomPriorityQueueItem) getRoomNameInRooms(name string) bool {
+	for i := range Rpqi.rooms {
+		if Rpqi.rooms[i].name == name {
 			return true
 		}
 	}
 	return false
 }
 
-func (Rsi *roomStackItem) processRoomStack(max_pressure, max_time, max_possible_rate int) []*roomStackItem {
-	var room_stack_nexts []*roomStackItem
-	if Rsi.curr_time >= max_time {
-		return room_stack_nexts
+func (Rpqi *roomPriorityQueueItem) processRoomItem(max_pressure, max_time, max_possible_rate int) []*roomPriorityQueueItem {
+	var room_item_nexts []*roomPriorityQueueItem
+	if Rpqi.curr_time >= max_time {
+		return room_item_nexts
 	}
 
-	if Rsi.getBestPossiblePressure(max_possible_rate, max_time) <= max_pressure {
-		return room_stack_nexts
+	if Rpqi.getBestPossiblePressure(max_possible_rate, max_time) <= max_pressure {
+		return room_item_nexts
 	}
 
-	room_stack_currs := []*roomStackItem{Rsi}
-	for i := range Rsi.searcher_times {
-		room_stack_nexts = make([]*roomStackItem, 0)
-		for j := range room_stack_currs {
-			if room_stack_currs[j].searcher_times[i] > Rsi.curr_time {
-				room_stack_nexts = append(room_stack_nexts, room_stack_currs[j])
+	room_item_currs := []*roomPriorityQueueItem{Rpqi}
+	for i := range Rpqi.searcher_times {
+		room_item_nexts = make([]*roomPriorityQueueItem, 0)
+		for j := range room_item_currs {
+			if room_item_currs[j].searcher_times[i] > Rpqi.curr_time {
+				room_item_nexts = append(room_item_nexts, room_item_currs[j])
 				continue
 			}
-			room_stack_nexts = append(room_stack_nexts, room_stack_currs[j].searchRooms(i, max_time)...)
+			room_item_nexts = append(room_item_nexts, room_item_currs[j].searchRooms(i, max_time)...)
 		}
-		room_stack_currs = room_stack_nexts
+		room_item_currs = room_item_nexts
 	}
 
-	for i := range room_stack_nexts {
-		room_stack_nexts[i].passTime()
+	for i := range room_item_nexts {
+		room_item_nexts[i].passTime()
 	}
 
-	return room_stack_nexts
+	return room_item_nexts
 }
 
 func (Rpq roomPriorityQueue) Len() int {
@@ -280,7 +280,7 @@ func (Rpq roomPriorityQueue) Swap(i, j int) {
 }
 
 func (Rpq *roomPriorityQueue) Push(x any) {
-	item := x.(*roomStackItem)
+	item := x.(*roomPriorityQueueItem)
 	*Rpq = append(*Rpq, item)
 }
 
@@ -320,7 +320,7 @@ func FindOptimalRoute(rooms map[string]*Room, start string, time, searchers int)
 		max_possible_rate += room.flow_rate
 	}
 
-	room_stack_first := roomStackItem{
+	room_item_first := roomPriorityQueueItem{
 		rooms:           make([]*Room, searchers),
 		opened_valves:   make(map[string]int),
 		curr_pressure:   0,
@@ -329,25 +329,25 @@ func FindOptimalRoute(rooms map[string]*Room, start string, time, searchers int)
 		searcher_times:  make([]int, searchers),
 	}
 
-	for i := range room_stack_first.rooms {
-		room_stack_first.rooms[i] = rooms[start]
-		room_stack_first.searcher_times[i] = 1
+	for i := range room_item_first.rooms {
+		room_item_first.rooms[i] = rooms[start]
+		room_item_first.searcher_times[i] = 1
 	}
 	room_priority_queue := make(roomPriorityQueue, 1)
-	room_priority_queue[0] = &room_stack_first
+	room_priority_queue[0] = &room_item_first
 	heap.Init(&room_priority_queue)
 
 	for len(room_priority_queue) != 0 {
-		room_stack_curr := heap.Pop(&room_priority_queue).(*roomStackItem)
+		room_item_curr := heap.Pop(&room_priority_queue).(*roomPriorityQueueItem)
 
-		if room_stack_curr.curr_pressure > max_pressure {
-			max_pressure = room_stack_curr.curr_pressure
+		if room_item_curr.curr_pressure > max_pressure {
+			max_pressure = room_item_curr.curr_pressure
 		}
 
-		room_stack_nexts := room_stack_curr.processRoomStack(max_pressure, time, max_possible_rate)
+		room_item_nexts := room_item_curr.processRoomItem(max_pressure, time, max_possible_rate)
 
-		for i := range room_stack_nexts {
-			heap.Push(&room_priority_queue, room_stack_nexts[i])
+		for i := range room_item_nexts {
+			heap.Push(&room_priority_queue, room_item_nexts[i])
 		}
 	}
 
